@@ -1,2 +1,3 @@
-# fsociety-chrome-ext
 #fsociety Chrome Exension
+
+Join us on Freenode IRC:  irc.freenode.net #fsociety.
