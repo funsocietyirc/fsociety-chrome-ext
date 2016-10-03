@@ -15,7 +15,7 @@
    },
    "name": "__MSG_fsext_name__",
    "options_page": "options.html",
-   "permissions": [ "storage", "tabs", "notifications", "https://fsociety.guru/*", "https://irony.fsociety.guru/*" ],
+   "permissions": [ "storage", "contextMenus", "tabs", "https://fsociety.guru/*", "https://irony.fsociety.guru/*" ],
    "update_url": "http://clients2.google.com/service/update2/crx",
    "version": "0.5",
    "web_accessible_resources" : [
