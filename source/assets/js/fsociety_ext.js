@@ -17,6 +17,8 @@ DATE         AUTHOR     CHANGES
 
 var fsext = {
     
+    API_TIMEOUT: 5,                         // number of seconds required between user-initiated API calls
+    STORAGE_LIFETIME: (1*60),               // number of seconds before internal data is considered stale and needs to be refreshed 
     ENABLE_LOG: true,
     STORAGE_KEY_USERTOKEN: "userToken",
     CHANNEL: "#fsociety",                   // this will be used to check whether api responses are relevant.
@@ -30,6 +32,33 @@ var fsext = {
         
         if (typeof (console) === 'undefined' || typeof (console.log) === 'undefined') return;
         console.log(str);
+    },
+
+    // helpers to access chrome localStorage
+    storage: {
+        set: function (key, obj) {
+            fsext.log("fsext.storage.set();");
+            var values = JSON.stringify(obj);
+            localStorage.setItem(key, values);
+        },
+
+        get: function (key) {
+            fsext.log("fsext.storage.get();");
+            if (localStorage.getItem(key) == null) return false;
+            return JSON.parse(localStorage.getItem(key));
+        },
+
+        update: function (key, newData) {
+            fsext.log("fsext.storage.update();");
+            if (localStorage.getItem(key) == null) return false;
+
+            var oldData = JSON.parse(localStorage.getItem(key));
+            for (keyObj in newData) {
+                oldData[keyObj] = newData[keyObj];
+            }
+            var values = JSON.stringify(oldData);
+            localStorage.setItem(key, values);
+        }
     },
 
 
@@ -134,9 +163,34 @@ var fsext = {
             fsext.popup.refresh();
         },
 
-        reloadLinks: function () {
+        reloadLinks: function (blnForceCacheOverride) {
             fsext.log("fsext.popup.reloadLinks();");
-            var fnc_callback = function (jsonData) {
+
+            var blnPerformRefresh = false;
+            var storageKeyCallTime = "api_urls_last_call";
+            var storageKey = "api_urls_data";
+
+            if (localStorage[storageKey] == null || localStorage[storageKeyCallTime] == null) {
+                fsext.log("fsext.popup.reloadLinks() - api not called before - setting blnPerformRefresh to true.");
+                blnPerformRefresh = true;
+            }
+            else if (blnForceCacheOverride !== true) {
+
+                var dttmNow = new Date(); // get the date to compare with the last one.
+                var dttmLastChecked = (localStorage[storageKeyCallTime] != null ? new Date(parseInt(localStorage[storageKeyCallTime])) : new Date((new Date()).getFullYear(), 0, 1));
+
+                fsext.log("fsext.popup.reloadLinks() - data last refreshed: " + dttmLastChecked);
+
+                var blnPerformRefresh = blnForceCacheOverride || false;
+
+                if ((dttmLastChecked.getTime() + (fsext.STORAGE_LIFETIME*1000)) <= dttmNow) {
+                    fsext.log("fsext.popup.reloadLinks() - stored data is stale... refresh it!");
+                    blnPerformRefresh = true; 
+                }
+
+            } 
+
+            var fnc_data_handler = function (jsonData) {
                 fsext.log(jsonData);
 
                 var lt = document.getElementById('links-table');
@@ -144,10 +198,9 @@ var fsext = {
                 var TEMPLATE = ltt.innerHTML;
                 var compiled_links = "";
                 
-                
                 for (var i = 0; i < jsonData.results.length; i++) {
                     var link = jsonData.results[i];
-                    fsext.log(link);
+                    //fsext.log(link);
                     if (link.to != fsext.CHANNEL) continue;
 
                     if (link.title === null || typeof (link.title) === 'undefined') link.title = link.url;
@@ -164,14 +217,26 @@ var fsext = {
                 lt.innerHTML = compiled_links;
             };
 
-            fsext.api.urlsGetMostRecent(0, fnc_callback);
+            if (blnPerformRefresh !== true) {
+                fsext.log("fsext.popup.reloadLinks() - using stored data - it's newish!");
+                fnc_data_handler(fsext.storage.get(storageKey))
+            }
+            else {
+                fsext.log("fsext.popup.reloadLinks() - stored data is about to be refreshed!");
+                var fnc_callback = function(jsonData) {
+                    fnc_data_handler(jsonData);
+                    fsext.storage.set(storageKey, jsonData);
+                    localStorage[storageKeyCallTime] = new Date().getTime();
+                };
+                fsext.api.urlsGetMostRecent(0, fnc_callback);
+            }
         },
 
-        refresh: function () {
+        refresh: function (blnForceCacheOverride) {
             fsext.log("fsext.popup.refresh();");
             var lt = document.getElementById('links-table');
             lt.innerHTML = '';
-            fsext.popup.reloadLinks();
+            fsext.popup.reloadLinks(blnForceCacheOverride);
         }
         
     },
@@ -201,7 +266,7 @@ var fsext = {
 
         populateSettings: function () {
             fsext.log("fsext.options.populateSettings();");
-            var strUserToken = localStorage[fsext.STORAGE_KEY_USERTOKEN];
+            var strUserToken = fsext.storage.get(fsext.STORAGE_KEY_USERTOKEN);
             if (!strUserToken) return;
             var txtUserToken = document.getElementById("txtUserToken");
             txtUserToken.value = strUserToken;
@@ -215,7 +280,7 @@ var fsext = {
             
             // Store the user token.
             
-            localStorage[fsext.STORAGE_KEY_USERTOKEN] = strUserToken;
+            fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, strUserToken);
             //getStatsByNick(setBadge);
 
             var divMessage = document.getElementById('divMessage');
