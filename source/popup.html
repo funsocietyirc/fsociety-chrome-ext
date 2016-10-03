@@ -1,0 +1,50 @@
+<html>
+	<head>
+		<title>__MSG_fsext_name__</title>
+
+        <link text="text/css" rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+		<link text="text/css" rel="stylesheet" href="/assets/css/theme.css" />
+        <link text="text/css" rel="stylesheet" href="/assets/css/popup.css" />
+        
+		<script type="text/javascript" src="/assets/js/fsociety_ext.js"></script>
+	</head>
+	<body>
+		<div class="controls">
+			<a id="lnkInfo" title="Info"><img src="/assets/images/info.svg" alt="Info" /></a> 
+			<a id="lnkRefresh" target="_blank" title="Refresh"><img src="/assets/images/refresh.svg" alt="Refresh" /></a> 
+			<a href="/options.html" target="_blank" title="Options"><img src="/assets/images/settings.svg" alt="Options" /></a>
+		</div>
+		
+		<span class="title">__MSG_fsext_name__</span>
+		<div class="clear-both"></div>
+
+		<div id="gate">
+			__MSG_fsext_popup_gate_text__
+		</div>
+		<div id="authed" style="display: none;">
+			<span class="signed-in-as">
+			__MSG_fsext_authed_as_text__: <span id="current_nick">nick</span>
+			</span> 
+
+			<div id="divMessage"></div>
+			<div class="links">
+				<strong>__MSG_fsext_popup_links_title__</strong>
+				<div id="links-table-template" style="display: none;">
+					<div class="entry">
+						From ##NICK## (##DTTM##):<br /><a href="##URL##" tooltip="##URL##" title="##URL##" target="_blank">##TITLE##</a>
+					</div>
+				</div>
+				<div id="links-table">
+				</div>
+			</div>
+			<div class="clear-both"></div>
+		</div>
+		
+		
+        <span id="spnJoinIRC"></span>__MSG_fsext_joinfsociety_text__:&nbsp; <a id="lnkWebchat" href="__MSG_fsext_webchat__" target="_blank">__MSG_fsext_webchat_text__</a> &nbsp;|&nbsp; <a id="lnkWeb" href="__MSG_fsext_website__" target="_blank">__MSG_fsext_web_text__</a>
+		<br />
+		<span class="irc-info">__MSG_fsext_irc_server__ &nbsp;|&nbsp; __MSG_fsext_irc_channel__</span>
+        
+        <script type="text/javascript" src="/assets/js/fsociety_ext_popup_init.js"></script>
+	</body>
+</html>

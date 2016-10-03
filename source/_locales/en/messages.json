@@ -1,0 +1,65 @@
+{
+    "fsext_name": {
+        "message": "#fsociety Extension"
+    },
+    "fsext_notification_title": {
+        "message": "#fsociety Extension"
+    },
+    "fsext_description": {
+        "message": "irc.freenode.net -> #fsociety"
+    },
+    "fsext_error_api": {
+        "message": "There was an error with the API."
+    },
+    "fsext_info": {
+        "message": "#fsociety Extension. \r\nCreated by David Richer (IronY) & Jay Baldwin (Darc)."
+    },
+    "fsext_joinfsociety_text": {
+        "message": "Join #fsociety"
+    },
+    "fsext_setnick_text": {
+        "message": "Please set a nick in the \u003Ca href='options.html' target='_blank'\u003Eoptions\u003C/a\u003E."
+    },
+    "fsext_web_text": {
+        "message": "Website"
+    },
+    "fsext_webchat_text": {
+        "message": "Webchat"
+    },
+    "fsext_irc_server": {
+        "message": "irc.freenode.net"
+    },
+    "fsext_irc_channel": {
+        "message": "#fsociety"
+    },
+    "fsext_website": {
+        "message": "https://irony.fsociety.guru"
+    },
+    "fsext_webchat": {
+        "message": "https://irony.fsociety.guru/chat"
+    },
+    "fsext_options_usertoken_label": {
+        "message": "User Token"
+    },
+    "fsext_options_save_label": {
+        "message": "Save"
+    },
+    "fsext_options_title": {
+        "message": "Options"
+    },
+    "fsext_options_instructions": {
+        "message": "Enter your User Token below, provided by MrNodeBot on irc.freenode.net in #fsociety. <br /><br /> Join the channel and type: &quot;MrNodeBot: hello&quot;"
+    },
+    "fsext_options_saved": {
+        "message": "Saved!"
+    },
+    "fsext_popup_gate_text": {
+        "message": "<strong>Hello friend.</strong><br /><br />Thanks for installing! You're almost ready to use the extension! You just need to configure it, and you'll be good to go.<br /><br /><a class=\"button\" href=\"/options.html\" target=\"_blank\">&rarr; Configure Now!</a>"
+    },
+    "fsext_authed_as_text": {
+        "message": "Signed in as"
+    },
+    "fsext_popup_links_title": {
+        "message": "Recent Links"
+    }
+}

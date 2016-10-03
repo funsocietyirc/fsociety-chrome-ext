@@ -1,0 +1,105 @@
+
+/*###########################################################
+### GLOBAL SITE STYLES ######################################
+###########################################################*/
+
+html, body { margin: 0; padding: 0; border: 0; height: 100%; }
+.clear-both { clear: both; }
+.max-width-100p { max-width: 100%; }
+
+
+
+/*###########################################################
+### BOOTSTRAP OVERRIDES #####################################
+###########################################################*/
+
+blockquote {
+    border-left-color: #ccc !important;
+    font-size: 1em !important;
+    margin: 0 !important;
+    color: #888;
+}
+
+
+
+/*###########################################################
+### OTHER ###################################################
+###########################################################*/
+
+/* define root em size */
+html { font-size: 16px; } 
+
+body 
+{
+    text-align: center;
+    margin: 0;
+    padding: 1em;
+    color: #ffffff;
+    background: url('/assets/images/bg.jpg') #000000 no-repeat center center;
+    background-size: contain;
+    font-family: Sans-Serif;
+}
+
+h1 {
+/*    padding-bottom: 0.125rem;*/
+    border-bottom: 0.125rem solid #D12026;
+}
+
+
+
+/* links */
+a:link, a:visited {
+    color: rgba(255,50,50,0.8);
+
+}
+
+#divMessage { text-align: center; }
+
+    #divMessage .success {
+        background: rgba(0,255,0,0.5);
+        margin-bottom: 1em;
+        padding: 1em;
+    }
+
+
+
+/* Field styles */
+
+input[type="text"] {
+    color: limegreen; 
+    font-family: monospace; 
+    background: rgba(0,0,0,0.8); 
+    border: 0; 
+    padding: 0.5em;
+    text-align: center;
+}
+
+
+/* Button styles */
+
+input[type="text"], input[type="submit"], input[type="button"], button, a.button {
+    box-sizing: border-box;
+    width: 100%;
+    border-radius: 0.5em;
+    border: 0.125em solid darkgreen;
+    display: inline-block;
+    vertical-align: middle;
+    padding: 0.5em;
+}
+
+button, input[type="submit"], a.button
+{
+    margin-top: 0.625em;
+    border: none;
+    font: inherit;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 0 0.2em rgba(0,0,0,0.8) 0.2em;
+    background: rgb(50,0,0);
+    text-decoration: none;
+    border: 0.1em solid #555 !important;
+}
+    button:hover, input[type="submit"]:hover, a.button:hover
+    {
+        background: rgba(50,50,50,0.5);
+    }

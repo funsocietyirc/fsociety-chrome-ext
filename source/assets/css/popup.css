@@ -1,0 +1,32 @@
+body 
+{
+    width: 35em;
+}
+
+.title { text-align: left; float: left; }
+
+#gate {
+    margin: 1em;
+    font-size: 1rem;
+}
+
+.controls
+{
+    float: right;
+    width: 4rem;
+}
+.controls img { max-width: 16px; margin-right: 1px; }
+
+.irc-info { font-size: .667rem; color: #999 }
+
+.links { text-align: left; }
+.links .entry {
+    margin-bottom: 1.5em;
+}
+
+/* I'll turn this back on when implemented */
+.signed-in-as { display: none; }
+
+#links-table { margin-top: 1em; }
+
+#lnkInfo, #lnkRefresh { cursor: pointer; }
