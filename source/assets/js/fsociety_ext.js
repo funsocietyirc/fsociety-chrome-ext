@@ -21,7 +21,6 @@ var fsext = {
     STORAGE_LIFETIME: (1*60),               // number of seconds before internal data is considered stale and needs to be refreshed 
     ENABLE_LOG: true,
     STORAGE_KEY_USERTOKEN: "userToken",
-    CHANNEL: "#fsociety",                   // this will be used to check whether api responses are relevant.
 
     api_urls: {
         urls: "https://bot.fsociety.guru/api/urls"
@@ -191,28 +190,43 @@ var fsext = {
             } 
 
             var fnc_data_handler = function (jsonData) {
-                fsext.log(jsonData);
+                //fsext.log(jsonData);
+
+                var channel = document.getElementById('hfChannel').value;
 
                 var lt = document.getElementById('links-table');
                 var ltt = document.getElementById('links-table-template');
                 var TEMPLATE = ltt.innerHTML;
                 var compiled_links = "";
+
+                var channels = new Array();
+                var filter_channels = document.getElementById('dynamic-channels');
+
                 
                 for (var i = 0; i < jsonData.results.length; i++) {
                     var link = jsonData.results[i];
-                    //fsext.log(link);
-                    if (link.to != fsext.CHANNEL) continue;
 
-                    if (link.title === null || typeof (link.title) === 'undefined') link.title = link.url;
+                    if (channels.indexOf(link.to) === -1) {
+                        channels.push(link.to);
+                        filter_channels.innerHTML += '<span class="filter-option">' + link.to + '</span>';
+                    }
+                    
+                    if (channel != 'all' && link.to != channel) continue;
+
+                    if (link.title === null || typeof (link.title) === 'undefined') {
+                        link.title = (link.url.length < 67 ? link.url : "No title - hover to see URL");
+                    }
 
                     var str = TEMPLATE;      
-                    str = str.replace(/##DTTM##/g, new Date(link.timestamp).toLocaleDateString("en-US") + " " + new Date(link.timestamp).toLocaleTimeString("en-US"));
+                    str = str.replace(/##DTTM##/g, new Date(link.timestamp).toLocaleDateString() + " " + new Date(link.timestamp).format("H:MM"));
                     str = str.replace(/##NICK##/g, link.from);
                     str = str.replace(/##URL##/g, link.url);
                     str = str.replace(/##TITLE##/g, link.title);
 
                     compiled_links += str;
                 }
+
+
 
                 lt.innerHTML = compiled_links;
             };
@@ -237,6 +251,14 @@ var fsext = {
             var lt = document.getElementById('links-table');
             lt.innerHTML = '';
             fsext.popup.reloadLinks(blnForceCacheOverride);
+        },
+
+        changeChannelFilterLinks: function (channel) {
+            fsext.log("fsext.popup.changeChannelFilterLinks(); - channel: " + channel);
+
+            
+
+            fsext.popup.reloadLinks();
         }
         
     },

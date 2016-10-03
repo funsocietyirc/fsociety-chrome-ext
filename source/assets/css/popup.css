@@ -1,6 +1,6 @@
-body 
-{
+body {
     width: 35em;
+    background-size: cover;
 }
 
 .title { text-align: left; float: left; }
@@ -22,6 +22,8 @@ body
 .links { text-align: left; }
 .links .entry {
     margin-bottom: 1.5em;
+    padding-bottom: 1.5em;
+    /*border-bottom: 0.1em solid rgba(50,50,50,0.0);*/
 }
 
 /* I'll turn this back on when implemented */
@@ -30,3 +32,26 @@ body
 #links-table { margin-top: 1em; }
 
 #lnkInfo, #lnkRefresh { cursor: pointer; }
+
+.channel-filter {
+    text-align: center;
+}
+
+
+
+.nick {
+    color: #fb0;
+}
+.datetime { 
+    color: #8042B5; 
+    float: right;
+    font-size: 0.9em;
+}
+.link-a {
+    overflow: hidden;
+    clear: both;
+}
+    .link-a a:link, a:visited { color: #fc3d31; }
+    .link-a a:hover { color: #3d96dd; }
+
+.channel-filter .filter-option { display: inline-block; padding: 0 0.25em; cursor: pointer; }

@@ -61,5 +61,8 @@
     },
     "fsext_popup_links_title": {
         "message": "Recent Links"
+    },
+    "fsext_popup_channel_filter_text": {
+        "message": "Channel"
     }
 }

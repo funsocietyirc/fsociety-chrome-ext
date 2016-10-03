@@ -6,8 +6,10 @@
 		<link text="text/css" rel="stylesheet" href="/assets/css/theme.css" />
         <link text="text/css" rel="stylesheet" href="/assets/css/popup.css" />
         
+        <script type="text/javascript" src="/assets/js/date.format.js"></script>
 		<script type="text/javascript" src="/assets/js/fsociety_ext.js"></script>
 	</head>
+
 	<body>
 		<div class="controls">
 			<a id="lnkInfo" title="Info"><img src="/assets/images/info.svg" alt="Info" /></a> 
@@ -28,10 +30,23 @@
 
 			<div id="divMessage"></div>
 			<div class="links">
-				<strong>__MSG_fsext_popup_links_title__</strong>
+				<h4>__MSG_fsext_popup_links_title__</h4>
+				<input type="hidden" id="hfChannel" value="all" />
+				<div class="channel-filter">
+					__MSG_fsext_popup_channel_filter_text__:
+					<span class="filter-option">ALL</span>
+					<span id="dynamic-channels">
+
+					</span>
+				</div>
 				<div id="links-table-template" style="display: none;">
 					<div class="entry">
-						From ##NICK## (##DTTM##):<br /><a href="##URL##" tooltip="##URL##" title="##URL##" target="_blank">##TITLE##</a>
+						<span class="nick">##NICK##</span>
+						<span class="datetime">##DTTM##</span>
+						<div class="link-a">
+							<a href="##URL##" tooltip="##URL##" title="##URL##" target="_blank">##TITLE##</a>
+						</div>
+						
 					</div>
 				</div>
 				<div id="links-table">
