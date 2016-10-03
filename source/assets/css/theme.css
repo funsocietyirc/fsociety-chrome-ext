@@ -36,6 +36,7 @@ body
     padding: 1em;
     color: #ffffff;
     background: url('/assets/images/bg.jpg') #000000 no-repeat center center;
+    background-attachment: fixed;
     background-size: contain;
     font-family: Sans-Serif;
 }
