@@ -169,11 +169,20 @@ var fsext = {
      */
     pusher: {
 
+        /**
+         * See if Pusher is a script we can use.
+         * 
+         * @return {boolean} True if Pusher is there.  False if not.
+         */
         checkDependency: function () {
             fsext.log("fsext.pusher.checkDependency();");
             return (typeof (Pusher) !== 'undefined');
         },
         
+
+        /**
+         * Initiate an instance of Pusher and bind to the appropriate channels.
+         */
         init: function () {
             fsext.log("fsext.pusher.init();");
             
@@ -185,13 +194,66 @@ var fsext = {
             fsext.pusherURLs = new Pusher('9d0bcd17badf5ab7cc79', { encrypted: true });
             fsext.pusherURLsPublicChannel = fsext.pusherURLs.subscribe('public'); 
 
-            fsext.pusherURLsPublicChannel.bind('url', function(data) {
-                alert('An event was triggered with message: ' + data.message);
-            });
+            fsext.pusherURLsPublicChannel.bind('url', fsext.pusher.pushHandlerUrls);
+            fsext.pusherURLsPublicChannel.bind('image', fsext.pusher.pushHandlerImages);
+        },
 
-            fsext.pusherURLsPublicChannel.bind('image', function(data) {
-                alert('An event was triggered with message: ' + data.message);
-            });
+
+        /**
+         * Pusher handler for links and images
+         */
+        pushHandlerUrlsAndImages: function (data) {
+            fsext.log("fsext.pusher.pushHandlerUrlsAndImages();");
+            
+            let jsonCachedData = fsext.storage.get(fsext.STORAGE_KEY_API_URLS_DATA);
+
+            if (typeof (jsonCachedData) === 'undefined' || typeof (jsonCachedData.results) === 'undefined') {
+                fsext.log("fsext.pusher.pushHandlerUrlsAndImages(); - exiting. Cached results were invalid.");
+                return;
+            }
+
+            let jsonResults = jsonCachedData.results;
+
+            jsonResults.unshift(data);
+
+            jsonCachedData.results = jsonResults;
+
+            // let str_results = JSON.stringify(jsonResults);
+
+            // console.log("CACHED RESULTS ONLY: ")
+            // console.log(str_results);
+
+            // let new_results = JSON.stringify(data) + "," + str_results;
+
+            // console.log("NEW RESULTS: ")
+            // console.log(new_results); 
+
+            // jsonCachedData.results = JSON.parse(new_results);
+
+            //let new_data = JSON.stringify(jsonCachedData);
+
+            console.log("ALL DATA: ")
+            console.log(JSON.stringify(jsonCachedData));
+
+            fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonCachedData);
+        },
+
+
+        /**
+         * Pusher handler for links
+         */
+        pushHandlerUrls: function (data) {
+            fsext.log("fsext.pusher.pushHandlerUrls();");
+            fsext.pusher.pushHandlerUrlsAndImages(data);
+        },
+
+
+        /**
+         * Pusher handler for images
+         */
+        pushHandlerImages: function (data) {
+            fsext.log("fsext.pusher.pushHandlerImages();");
+            fsext.pusher.pushHandlerUrlsAndImages(data);
         }
     },
 
@@ -488,7 +550,7 @@ var fsext = {
             lnkInfo.onclick = function () { alert(chrome.i18n.getMessage("fsext_info")); };
 
             let lnkRefresh = document.getElementById('lnkRefresh');
-            lnkRefresh.onclick = fsext.popup.refresh;
+            lnkRefresh.onclick = function() { fsext.popup.refresh(); };
 
             fsext.popup.refresh();
         },
@@ -502,7 +564,7 @@ var fsext = {
         reloadLinks: function (blnForceCacheOverride) {
             fsext.log("fsext.popup.reloadLinks();");
 
-            let blnPerformRefresh = false;
+            let blnPerformRefresh = (blnForceCacheOverride || false);
 
             if (fsext.storage.getRaw(fsext.STORAGE_KEY_API_URLS_DATA) == null || fsext.storage.getRaw(fsext.STORAGE_KEY_API_URLS_LAST_CALL) == null) {
                 fsext.log("fsext.popup.reloadLinks() - api not called before - setting blnPerformRefresh to true.");
@@ -515,8 +577,6 @@ var fsext = {
 
                 fsext.log("fsext.popup.reloadLinks() - data last refreshed: " + dttmLastChecked);
 
-                let blnPerformRefresh = blnForceCacheOverride || false;
-
                 if ((dttmLastChecked.getTime() + (fsext.STORAGE_LIFETIME * 1000)) <= dttmNow) {
                     fsext.log("fsext.popup.reloadLinks() - stored data is stale... refresh it!");
                     blnPerformRefresh = true;
@@ -524,7 +584,9 @@ var fsext = {
 
             }
 
-            if (blnPerformRefresh !== true) {
+            fsext.log("fsext.popup.reloadLinks() - blnPerformRefresh = " + blnPerformRefresh);
+
+            if (blnPerformRefresh != true) {
                 fsext.log("fsext.popup.reloadLinks() - using stored data - it's newish!");
                 fsext.popup.linksRender(fsext.storage.get(fsext.STORAGE_KEY_API_URLS_DATA))
             }
@@ -580,28 +642,29 @@ var fsext = {
             let filter_channels = document.getElementById('dynamic-channels');
             filter_channels.innerHTML = '';
 
+            if (typeof (jsonData) !== 'undefined' && typeof (jsonData.results) !== 'undefined') {
+                for (let i = 0; i < jsonData.results.length; i++) {
+                    let link = jsonData.results[i];
 
-            for (let i = 0; i < jsonData.results.length; i++) {
-                let link = jsonData.results[i];
+                    if (channels.indexOf(link.to) === -1) {
+                        channels.push(link.to);
+                        filter_channels.innerHTML += '<span class="filter-option" data-value="' + link.to + '">' + link.to + '</span>';
+                    }
 
-                if (channels.indexOf(link.to) === -1) {
-                    channels.push(link.to);
-                    filter_channels.innerHTML += '<span class="filter-option" data-value="' + link.to + '">' + link.to + '</span>';
+                    if (channel != 'all' && link.to != channel) continue;
+
+                    if (link.title === null || typeof (link.title) === 'undefined') {
+                        link.title = (link.url.length < 67 ? link.url : "No title - hover to see URL");
+                    }
+
+                    let str = TEMPLATE;
+                    str = str.replace(/##DTTM##/g, new Date(link.timestamp).toLocaleDateString() + " " + new Date(link.timestamp).format("H:MM"));
+                    str = str.replace(/##NICK##/g, link.from);
+                    str = str.replace(/##URL##/g, link.url);
+                    str = str.replace(/##TITLE##/g, link.title);
+
+                    compiled_links += str;
                 }
-
-                if (channel != 'all' && link.to != channel) continue;
-
-                if (link.title === null || typeof (link.title) === 'undefined') {
-                    link.title = (link.url.length < 67 ? link.url : "No title - hover to see URL");
-                }
-
-                let str = TEMPLATE;
-                str = str.replace(/##DTTM##/g, new Date(link.timestamp).toLocaleDateString() + " " + new Date(link.timestamp).format("H:MM"));
-                str = str.replace(/##NICK##/g, link.from);
-                str = str.replace(/##URL##/g, link.url);
-                str = str.replace(/##TITLE##/g, link.title);
-
-                compiled_links += str;
             }
 
             let els = document.querySelectorAll(".filter-option:not([onclick])");
@@ -733,12 +796,30 @@ var fsext = {
 
 
         /**
-         * Refreshes the data
+         * Reloads the current display of the URLs API.
+         *
+         * @param {boolean} blnForceCacheOverride Pass true if you want to force a reload from API
          */
-        refresh: function () { 
-            fsext.log("fsext.background.refresh();");            
+        reloadLinks: function (blnForceCacheOverride) {
+            fsext.log("fsext.background.reloadLinks();");
 
-            fsext.pusher.init();
+            let fnc_callback = function (jsonData) {
+                fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonData);
+                fsext.storage.setRaw(fsext.STORAGE_KEY_API_URLS_LAST_CALL, new Date().getTime());
+            };
+            fsext.api.urlsGetMostRecent(fnc_callback);
+
+        },
+
+
+        /**
+         * Reloads the data.
+         *
+         * @param {boolean} blnForceCacheOverride Pass true if you want to force a reload from API
+         */
+        refresh: function (blnForceCacheOverride) {
+            fsext.log("fsext.background.refresh();");
+            fsext.background.reloadLinks(blnForceCacheOverride);
         },
 
 
@@ -749,6 +830,8 @@ var fsext = {
             fsext.log("fsext.background.onDOMContentLoaded();");
             
             fsext.localization.localizeHtmlPage();
+
+            fsext.pusher.init();
             
             fsext.background.refresh();
             setInterval(function() { fsext.background.refresh(); }, fsext.BACKGROUND_REFRESH_FREQUENCY*1000);
