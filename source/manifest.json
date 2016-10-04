@@ -19,6 +19,7 @@
     "options_page": "options.html",
     "permissions": [
         "storage",
+        "notifications",
         "contextMenus",
         "tabs",
         "https://fsociety.guru/*",
