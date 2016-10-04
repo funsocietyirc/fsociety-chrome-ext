@@ -99,6 +99,22 @@ var fsext = {
     STORAGE_KEY_API_URLS_DATA: "fsext_api_urls_data",
 
 
+    /**
+     * Pusher instance holder for URLs
+     *
+     * @type {Pusher object}
+     */
+    pusherURLs: null,
+
+
+    /**
+     * Pusher Public Channel instance holder for URLs
+     *
+     * @type {Pusher PublicChannel object}
+     */
+    pusherURLsPublicChannel: null,
+
+
     /* API URLs
     -----------------------------------------------------------------------------*/
 
@@ -108,7 +124,15 @@ var fsext = {
      * @type {array}
      */
     api_urls: {
-        urls: "https://bot.fsociety.guru/api/urls"
+        /**
+         * QueryString Parameters:
+         * - pageSize
+         * - channel
+         * - user
+         * - type (def:null|images)
+         * - sort (def:desc|asc)
+         */
+        urls: "https://bot.fsociety.guru/api/urls?pageSize=50"
     },
 
 
@@ -137,6 +161,38 @@ var fsext = {
      */
     getMessage: function (key) {
         return chrome.i18n.getMessage(key);
+    },
+
+
+    /**
+     * Pusher methods and Functions
+     */
+    pusher: {
+
+        checkDependency: function () {
+            fsext.log("fsext.pusher.checkDependency();");
+            return (typeof (Pusher) !== 'undefined');
+        },
+        
+        init: function () {
+            fsext.log("fsext.pusher.init();");
+            
+            if (!fsext.pusher.checkDependency()) {
+                fsext.log("fsext.pusher.init(); - exiting.  Pusher not found or instantiated.");
+                return;
+            }
+
+            fsext.pusherURLs = new Pusher('9d0bcd17badf5ab7cc79', { encrypted: true });
+            fsext.pusherURLsPublicChannel = fsext.pusherURLs.subscribe('public'); 
+
+            fsext.pusherURLsPublicChannel.bind('url', function(data) {
+                alert('An event was triggered with message: ' + data.message);
+            });
+
+            fsext.pusherURLsPublicChannel.bind('image', function(data) {
+                alert('An event was triggered with message: ' + data.message);
+            });
+        }
     },
 
 
