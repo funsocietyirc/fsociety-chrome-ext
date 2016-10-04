@@ -100,6 +100,24 @@ var fsext = {
 
 
     /**
+     * Key that is used to store the user preference to notify on link
+     *
+     * @const
+     * @type {string}
+     */
+    STORAGE_KEY_NOTIFICATION_ON_LINK: "fsext_notify_on_link",
+
+
+    /**
+     * Key that is used to store the channel list to notify on link
+     *
+     * @const
+     * @type {string}
+     */
+    STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK: "fsext_channels_to_notify_on_link",
+
+
+    /**
      * Pusher instance holder for URLs
      *
      * @type {Pusher object}
@@ -140,6 +158,8 @@ var fsext = {
     /* Helper Functions
     -----------------------------------------------------------------------------*/
 
+    notificationsClickActionsByID: new Array(),
+
     /**
      * Logs to the console if the configuration allows.
      */
@@ -150,6 +170,14 @@ var fsext = {
         if (typeof (console) === 'undefined' || typeof (console.log) === 'undefined') return;
 
         console.log(str);
+    },
+
+    newGuid: function () {
+        // Taken from http://stackoverflow.com/a/2117523 
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+            return v.toString(16);
+        });
     },
 
 
@@ -232,10 +260,43 @@ var fsext = {
 
             //let new_data = JSON.stringify(jsonCachedData);
 
-            console.log("ALL DATA: ")
-            console.log(JSON.stringify(jsonCachedData));
+            // console.log("ALL DATA: ")
+            // console.log(JSON.stringify(jsonCachedData));
 
             fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonCachedData);
+            
+
+            let blnNotify = (fsext.storage.getRaw(fsext.STORAGE_KEY_NOTIFICATION_ON_LINK) == "true");
+            let strChannels = fsext.storage.get(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK);
+
+            if (blnNotify) {
+                let nick = data.from;
+                let channel = data.to;
+
+                let aryChannels = strChannels.split(",");
+                blnNotify = false;
+
+                for (let i = 0; i < aryChannels.length; i++) {
+                    if (channel.toLowerCase() == aryChannels[i].toLowerCase()) blnNotify = true;
+                }             
+                
+                if (blnNotify) {
+                    let title = "Link from " + nick + " to " + channel;
+
+                    let notification = {
+                        "type": "basic",
+                        "iconUrl": "/assets/images/icon_128.png",
+                        "title": title,
+                        "message": (data.url + (data.title ? "\r\nTitle: " + data.title : "")),
+                        "isClickable": true
+                    };
+
+                    let id = fsext.notifications.create(notification);
+
+                    fsext.storage.setRaw("notif_" + id, data.url);
+                }
+                
+            }
         },
 
 
@@ -435,30 +496,61 @@ var fsext = {
      * Facilitates Chrome notifications
      */
     notifications: {
-        create: function (title, msg, timeout) {
-            fsext.log("fsext.notifications.create(); Title: [" + title + "] - Message: [" + msg + "]");
+
+        clickActionsByID: [],
+
+        clickHandler: function (notificationId) {
+            fsext.log("fsext.notifications.clickHandler(); notificationId: " + notificationId);
+            
+            let url = fsext.storage.getRaw("notif_" + notificationId);
+
+            fsext.log("fsext.notifications.clickHandler(); url: " + url);
+
+            if (typeof (url) !== 'undefined' && url != null) chrome.tabs.create({ "url": url });
+
+            fsext.storage.setRaw("notif_" + notificationId, null);
+
+            chrome.notifications.clear(notificationId);
+        },
+
+
+        create: function (options) {
+            fsext.log("fsext.notifications.create();");
+            
+            if (!options) {
+                console.error("fsext.notifications.create(); - No options provided.")
+                return;
+            }
+
+            //fsext.log(options);
+            
             if (
                 fsext.notifications.current
                 && typeof (fsext.notifications.current) !== 'undefined'
                 && typeof (fsext.notifications.current.cancel) !== 'undefined'
             ) fsext.notifications.current.cancel();
 
-            let notification = {
-                "type": "basic",
-                "iconUrl": "/assets/images/icon_128.png",
-                "title": title,
-                "message": msg
-            };
+            // let notification = {
+            //     "type": "basic",
+            //     "iconUrl": "/assets/images/icon_128.png",
+            //     "title": "#fsociety Extension",
+            //     "message": msg
+            // };
 
-            chrome.notifications.create("", notification, function () { });
+            let id = fsext.newGuid(); 
+            
+            chrome.notifications.create(id, options, function () { });
 
             setTimeout(function () {
+                fsext.storage.setRaw("notif_" + id, null);
                 if (
                     fsext.notifications.current
                     && typeof (fsext.notifications.current) !== 'undefined'
                     && typeof (fsext.notifications.current.cancel) !== 'undefined'
                 ) fsext.notifications.current.cancel(); 
-            }, (timeout || 1000*5));
+            }, (options.timeout || 1000*5));
+
+            return id;
         },
 
 
@@ -749,9 +841,18 @@ var fsext = {
         populateSettings: function () {
             fsext.log("fsext.options.populateSettings();");
             let strUserToken = fsext.storage.get(fsext.STORAGE_KEY_USERTOKEN);
-            if (!strUserToken) return;
-            let txtUserToken = document.getElementById("txtUserToken");
-            txtUserToken.value = strUserToken;
+            if (strUserToken) {
+                let txtUserToken = document.getElementById("txtUserToken");
+                txtUserToken.value = strUserToken;
+            }
+
+            let blnNotifyOnLink = (fsext.storage.getRaw(fsext.STORAGE_KEY_NOTIFICATION_ON_LINK) == "true");
+            let chkNotifyOnLinks = document.getElementById("chkNotifyOnLinks");
+            chkNotifyOnLinks.checked = blnNotifyOnLink;
+
+            let strChannelsToWatchForLinks = fsext.storage.get(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK);
+            let txtChannelsToWatchForLinks = document.getElementById("txtChannelsToWatchForLinks");
+            txtChannelsToWatchForLinks.value = strChannelsToWatchForLinks;
         },
 
 
@@ -760,14 +861,23 @@ var fsext = {
          */
         saveSettings: function () {
             fsext.log("fsext.options.saveSettings();");
+
+            // User Token
             let txtUserToken = document.getElementById("txtUserToken");
             let strUserToken = txtUserToken.value;
             fsext.log("fsext.options.saveSettings() - user token: " + strUserToken);
-
-            // Store the user token.
-
             fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, strUserToken);
-            //getStatsByNick(setBadge);
+
+            // Notify on links
+            let chkNotifyOnLinks = document.getElementById("chkNotifyOnLinks");
+            fsext.log("fsext.options.saveSettings() - chkNotifyOnLinks.checked: " + chkNotifyOnLinks.checked);
+            fsext.storage.setRaw(fsext.STORAGE_KEY_NOTIFICATION_ON_LINK, chkNotifyOnLinks.checked.toString().toLowerCase());
+
+            // Channels to Watch for links
+            let txtChannelsToWatchForLinks = document.getElementById("txtChannelsToWatchForLinks");
+            let strChannelsToWatchForLinks = txtChannelsToWatchForLinks.value;
+            fsext.log("fsext.options.saveSettings() - channels to watch: " + strChannelsToWatchForLinks);
+            fsext.storage.set(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK, strChannelsToWatchForLinks);
 
             let divMessage = document.getElementById('divMessage');
             divMessage.innerHTML = "<div class=\"success\">__MSG_fsext_options_saved__</span>";
@@ -787,6 +897,10 @@ var fsext = {
          */
         init: function () {
             fsext.log("fsext.background.init();");
+
+            chrome.notifications.onClicked.addListener(function (notificationId) {
+                fsext.notifications.clickHandler(notificationId); 
+            });
                 
             // Add event listeners once the DOM has fully loaded by listening for the
             // `DOMContentLoaded` event on the document, and adding your listeners to

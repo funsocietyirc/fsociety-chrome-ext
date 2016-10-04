@@ -73,6 +73,14 @@
     },
     "fsext_popup_all_channels_text": {
         "message": "ALL CHANNELS"
+    },
+    "fsext_options_channelstowatchforlinks_label": {
+        "message": "Channels to watch for links"
+    },
+    "fsext_options_channelstowatchforlinks_place": {
+        "message": "e.g. - #fsociety,#mrrobot"
+    },
+    "fsext_options_notifyonlinks_label": {
+        "message": "Notify on links"
     }
-    
 }
