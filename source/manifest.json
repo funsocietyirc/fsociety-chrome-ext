@@ -25,6 +25,14 @@
         "https://fsociety.guru/*",
         "https://irony.fsociety.guru/*"
     ],
+    "externally_connectable": {
+        "matches": [
+            "https://*.pusher.com/*",
+            "https://fsociety.guru/*",
+            "https://irony.fsociety.guru/*"
+        ]
+    },
+    "content_security_policy": "script-src 'self' https://js.pusher.com https://stats.pusher.com https://cdnjs.cloudflare.com; object-src 'self'",
     "update_url": "http://clients2.google.com/service/update2/crx",
     "version": "0.51",
     "web_accessible_resources": [

@@ -737,6 +737,8 @@ var fsext = {
          */
         refresh: function () { 
             fsext.log("fsext.background.refresh();");            
+
+            fsext.pusher.init();
         },
 
 
@@ -748,7 +750,9 @@ var fsext = {
             
             fsext.localization.localizeHtmlPage();
             
+            fsext.background.refresh();
             setInterval(function() { fsext.background.refresh(); }, fsext.BACKGROUND_REFRESH_FREQUENCY*1000);
+            
         }
 
     }
