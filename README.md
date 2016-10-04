@@ -19,9 +19,14 @@ found below.
 2. Clone this git repository, or download the zip so you have the files on your harddrive.  
 3. Click the "Load unpacked extension..." button on chrome://extensions/.
 4. Point it to the location you stored the /source directory on your harddirve.
-5. In #fsociety, make sure you type "MrNodeBot: hello" and then "MrNodeBot: token" to get your user token!
 
 That's it!
+
+
+## Setup
+1. In #fsociety, make sure you type "MrNodeBot: hello" and then "MrNodeBot: token" to get your user token!
+2. MrNodeBot will message your unique token to you.  Don't share it - but use it in the extension options.  
+
 
 
 ## Todo
