@@ -29,8 +29,7 @@ blockquote {
 /* define root em size */
 html { font-size: 16px; } 
 
-body 
-{
+body {
     text-align: center;
     margin: 0;
     padding: 1em;
@@ -132,9 +131,11 @@ button, input[type="submit"], a.button
 
     
 
+/*###########################################################
+### SCROLLBAR ###############################################
+###########################################################*/
 
-
-/* Scrollbar styles from fsociety website */
+/* Taken from fsociety website */
 
 ::selection {
     background: rgba(209,32,38,.995);

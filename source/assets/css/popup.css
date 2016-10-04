@@ -54,5 +54,10 @@ body {
     .link-a a:link, a:visited { color: #fc3d31; }
     .link-a a:hover { color: #3d96dd; }
 
-.channel-filter .filter-option { display: inline-block; padding: 0 0.25em; cursor: pointer; }
+.channel-filter .filter-option { display: inline-block; padding: 0 0.25em; cursor: pointer; font-weight: bold; }
 .channel-filter .filter-option.selected { color: #3d96dd; }
+
+a.see-more {
+    display: inline-block;
+    margin: 0 auto 1em auto;
+}

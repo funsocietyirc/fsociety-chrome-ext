@@ -1,4 +1,4 @@
-/*----------------------------------------------------------------------------- 
+/*-----------------------------------------------------------------------------
 #fsociety Extension for Google Chrome
 
 file version:   0.51
@@ -7,7 +7,7 @@ author:         David Richer (IronY) & Jay Baldwin (Darc)
 irc:            irc.freenode.net #fsociety
 website:        fsociety.guru
 
-version history: 
+version history:
 
 DATE         AUTHOR     CHANGES
 2016-10-03   JJBIV      Initial version
@@ -19,65 +19,84 @@ DATE         AUTHOR     CHANGES
  * fsociety extension
  */
 var fsext = {
-    
+
     /* Constants and configuration
     -----------------------------------------------------------------------------*/
-    
+
     /**
      * Number of seconds required between user-initiated API calls
-     * 
+     *
      * @const
      * @type {integer}
      */
     API_TIMEOUT: 5,
-    
+
 
     /**
-     * Number of seconds before internal data is considered stale and needs to be 
+     * Number of seconds before internal data is considered stale and needs to be
      * refreshed
-     * 
+     *
      * @const
      * @type {integer}
      */
-    STORAGE_LIFETIME: (1*60),  
-    
+    STORAGE_LIFETIME: (1 * 60),
+
+
+    /**
+     * Number of seconds between background refreshes
+     *
+     * @const
+     * @type {integer}
+     */
+    BACKGROUND_REFRESH_FREQUENCY: (30 * 60),
+
 
     /**
      * Should we output to the console?  Should NOT be true in production.
-     * 
+     *
      * @const
      * @type {boolean}
      */
     ENABLE_LOG: true,
-    
+
 
     /**
      * Key that is used to store the MrNodeBot User Token in Chrome's localStorage
-     * 
+     *
      * @const
      * @type {string}
      */
-    STORAGE_KEY_USERTOKEN: "userToken",
+    STORAGE_KEY_USERTOKEN: "fsext_userToken",
 
 
     /**
-     * Key that is used to store the datetime the URLs API was last called in 
+     * Key that is used to store the channel filter value last selected in
      * Chrome's localStorage
-     * 
+     *
      * @const
      * @type {string}
      */
-    STORAGE_KEY_API_URLS_LAST_CALL: "api_urls_last_call",
+    STORAGE_KEY_URLS_CHANNEL_FILTER_LAST_SELECTED: "fsext_urls_channel_filter_last_selected",
 
 
     /**
-     * Key that is used to store the DATA from the last  URLs API call in 
+     * Key that is used to store the datetime the URLs API was last called in
      * Chrome's localStorage
-     * 
+     *
      * @const
      * @type {string}
      */
-    STORAGE_KEY_API_URLS_DATA: "api_urls_data",
+    STORAGE_KEY_API_URLS_LAST_CALL: "fsext_api_urls_last_call",
+
+
+    /**
+     * Key that is used to store the DATA from the last  URLs API call in
+     * Chrome's localStorage
+     *
+     * @const
+     * @type {string}
+     */
+    STORAGE_KEY_API_URLS_DATA: "fsext_api_urls_data",
 
 
     /* API URLs
@@ -85,13 +104,13 @@ var fsext = {
 
     /**
      * Collection of production API URLs
-     * 
+     *
      * @type {array}
      */
     api_urls: {
         urls: "https://bot.fsociety.guru/api/urls"
     },
-    
+
 
 
     /* Helper Functions
@@ -100,7 +119,7 @@ var fsext = {
     /**
      * Logs to the console if the configuration allows.
      */
-    log: function(str) {
+    log: function (str) {
         // We don't need to log the use of the log function. ;)
         if (fsext.ENABLE_LOG !== true) return;
 
@@ -108,11 +127,11 @@ var fsext = {
 
         console.log(str);
     },
-    
+
 
     /**
      * Returns localized value of message from messages.json file.
-     * 
+     *
      * @param {string} key Name of the message.
      * @return {string} Localized message.
      */
@@ -121,19 +140,19 @@ var fsext = {
     },
 
 
-    /** 
+    /**
      * Helpers to access chrome localStorage
      */
     storage: {
 
         /**
          * Stores string or JSON data in Chrome's localStorage
-         * 
+         *
          * @param {string} key Key or name of the variable
-         * @param {string||JSON object} obj Value to store 
+         * @param {string||JSON object} obj Value to store
          */
         set: function (key, obj) {
-            fsext.log("fsext.storage.set();");
+            fsext.log("fsext.storage.set(); key: " + key);
             let values = JSON.stringify(obj);
             localStorage.setItem(key, values);
         },
@@ -141,27 +160,27 @@ var fsext = {
 
         /**
          * Gets string or JSON data from Chrome's localStorage
-         * 
+         *
          * @param {string} key Key or name of the variable
-         * @return {string||JSON object} Value requested 
+         * @return {string||JSON object} Value requested
          */
         get: function (key) {
-            fsext.log("fsext.storage.get();");
-            if (localStorage.getItem(key) == null) return false;
+            fsext.log("fsext.storage.get(); key: " + key);
+            if (localStorage.getItem(key) == null) return null;
             return JSON.parse(localStorage.getItem(key));
         },
-        
+
 
         /**
          * Updates key that already exists in JSON object to new value
          * and stores in Chrome's localStorage
-         * 
+         *
          * @param {string} key Key or name of the variable
-         * @return {string||JSON object} newData Value requested 
+         * @return {string||JSON object} newData Value requested
          */
         update: function (key, newData) {
-            fsext.log("fsext.storage.update();");
-            if (localStorage.getItem(key) == null) return false;
+            fsext.log("fsext.storage.update(); key: " + key);
+            if (localStorage.getItem(key) == null) return null;
 
             let oldData = JSON.parse(localStorage.getItem(key));
             for (keyObj in newData) {
@@ -174,22 +193,24 @@ var fsext = {
 
         /**
          * Gets string from Chrome's localStorage
-         * 
+         *
          * @param {string} key Key or name of the variable
-         * @return {string} Value requested 
+         * @return {string} Value requested
          */
         getRaw: function (key) {
+            fsext.log("fsext.storage.getRaw(); key: " + key);
             return localStorage[key];
         },
 
 
         /**
          * Stores string in Chrome's localStorage
-         * 
+         *
          * @param {string} key Key or name of the variable
-         * @param {string} obj Value to store 
+         * @param {string} obj Value to store
          */
         setRaw: function (key, value) {
+            fsext.log("fsext.storage.setRaw(); key: " + key);
             localStorage[key] = value;
         }
 
@@ -206,7 +227,7 @@ var fsext = {
 
         /**
          * Retrieves most recent URLs from the API
-         * 
+         *
          * @param {function} fnc_callback Callback to handle API response asynchronously.
          *      Function must have a parameter for response data to be passed through.
          */
@@ -214,15 +235,15 @@ var fsext = {
             fsext.log("fsext.api.urlsGetMostRecent();");
 
             // TODO - escape API calls if too many too quickly.
-            
+
             let url = fsext.api_urls.urls;
             fsext.log("fsext.api.urlsGetMostRecent() - sending API request to " + url);
-            
+
             // Initiate the api call
             try {
                 let req = new XMLHttpRequest();
                 req.open("GET", url, true);
-                req.onreadystatechange = function() {
+                req.onreadystatechange = function () {
                     if (req.readyState == 4) {
                         let data = req.responseText;
                         if (typeof (data) === 'undefined' || data.length == 0) return;
@@ -233,7 +254,7 @@ var fsext = {
                 }
                 req.send(null);
             }
-            catch(err) { }
+            catch (err) { }
         }
     },
 
@@ -249,13 +270,13 @@ var fsext = {
         /**
          * Replaces __MSG_(\w+)__ variables in object obj with their localized versions
          * in the messages.json file.
-         * 
+         *
          * @param {object} obj HTML element to search for i18n variables.
          * @param {string} tag i18n variable to look for
          */
         replace_i18n: function (obj, tag) {
             fsext.log("fsext.localization.replace_i18n();");
-            let msg = tag.replace(/__MSG_(\w+)__/g, function(match, v1) {
+            let msg = tag.replace(/__MSG_(\w+)__/g, function (match, v1) {
                 return (v1 ? chrome.i18n.getMessage(v1) : '');
             });
 
@@ -281,29 +302,28 @@ var fsext = {
             // Localize everything else by replacing all __MSG_***__ tags
             let page = document.getElementsByTagName('html');
 
-            for (let j = 0; j < page.length; j++) {
-                let obj = page[j];
-                let tag = obj.innerHTML.toString();
+            for (let i = 0; i < page.length; i++) {
+                let tag = page[i].innerHTML.toString();
 
-                fsext.localization.replace_i18n(obj, tag);
+                fsext.localization.replace_i18n(page[i], tag);
             }
         },
 
     },
 
 
-    
+
     /**
      * Facilitates Chrome notifications
      */
     notifications: {
-        create: function (title, msg) {
+        create: function (title, msg, timeout) {
             fsext.log("fsext.notifications.create(); Title: [" + title + "] - Message: [" + msg + "]");
             if (
-                fsext.notifications.current 
+                fsext.notifications.current
                 && typeof (fsext.notifications.current) !== 'undefined'
                 && typeof (fsext.notifications.current.cancel) !== 'undefined'
-            ) fsext.notifications.current.cancel()
+            ) fsext.notifications.current.cancel();
 
             let notification = {
                 "type": "basic",
@@ -313,30 +333,47 @@ var fsext = {
             };
 
             chrome.notifications.create("", notification, function () { });
+
+            setTimeout(function () {
+                if (
+                    fsext.notifications.current
+                    && typeof (fsext.notifications.current) !== 'undefined'
+                    && typeof (fsext.notifications.current.cancel) !== 'undefined'
+                ) fsext.notifications.current.cancel(); 
+            }, (timeout || 1000*5));
         },
 
 
         /**
          * Sets the badge on the extension icon on the toolbar.
-         * 
+         *
          * @param {object} options JSON object with "text" and "backgroundColor" properties.
          */
         setBadge: function (options) {
             fsext.log("fsext.notifications.setBadge();");
-            
+
             if (typeof (options) === 'undefined') {
-                chrome.browserAction.setBadgeText("");
+                chrome.browserAction.setBadgeText({ text: "" });
                 return;
             }
 
             if (typeof (options.text) !== 'undefined') {
-                chrome.browserAction.setBadgeText({text: options.text});
+                chrome.browserAction.setBadgeText({ text: options.text });
             }
 
             if (typeof (options.backgroundColor) !== 'undefined') {
-                chrome.browserAction.setBadgeBackgroundColor({color: options.backgroundColor});
+                chrome.browserAction.setBadgeBackgroundColor({ color: options.backgroundColor });
             }
 
+        },
+
+
+        /**
+         * Clears the badge on the extension icon on the toolbar.
+         */
+        clearBadge: function () {
+            fsext.log("fsext.notifications.setBadge();");
+            chrome.browserAction.setBadgeText({ text: "" });
         }
 
     },
@@ -349,24 +386,39 @@ var fsext = {
      * popup.html Methods & Routines
      */
     popup: {
-            
+
         /**
          * Handles setup of the popup
          */
         init: function () {
             fsext.log("fsext.popup.init();");
+
+            
+            // Add event listeners once the DOM has fully loaded by listening for the
+            // `DOMContentLoaded` event on the document, and adding your listeners to
+            // specific elements when it triggers.
+            document.addEventListener('DOMContentLoaded', fsext.popup.onDOMContentLoaded);
+        },
+
+
+        /**
+         * Executes when the page is loaded to the end.
+         */
+        onDOMContentLoaded: function () {
+            fsext.log("fsext.popup.onDOMContentLoaded();");
+
             fsext.localization.localizeHtmlPage();
 
-            let strUserToken = localStorage[fsext.STORAGE_KEY_USERTOKEN];
-            let blnUserAuthenticated = (strUserToken && strUserToken.replace(" ","").length > 0);
+            let strUserToken = fsext.storage.get(fsext.STORAGE_KEY_USERTOKEN);
+            let blnUserAuthenticated = (strUserToken && strUserToken.replace(" ", "").length > 0);
             fsext.log((blnUserAuthenticated ? "User Token is: " + strUserToken : "NO USER TOKEN SPECIFIED!"));
 
-            // escape so we don't let the users do more, cool things. 
+            // escape so we don't let the users do more, cool things.
             if (!blnUserAuthenticated) return;
 
-            // If you pass here, the script believes you're authenticated.  
+            // If you pass here, the script believes you're authenticated.
             // TODO: I'm planning to auth the user token on save, at which point I think
-            // we can trust that you're a real user.  We optionally may want to re-check every 
+            // we can trust that you're a real user.  We optionally may want to re-check every
             // 50th hit to verify we didn't turn the user token off on the back-end.
 
             let gate = document.getElementById('gate');
@@ -374,7 +426,7 @@ var fsext = {
             gate.style.display = 'none';
             authed.style.display = 'block';
 
-            // Bind click events to buttons that require javascript. Chrome doesn't let you put 
+            // Bind click events to buttons that require javascript. Chrome doesn't let you put
             // JS inline.
             let lnkInfo = document.getElementById('lnkInfo');
             lnkInfo.onclick = function () { alert(chrome.i18n.getMessage("fsext_info")); };
@@ -388,7 +440,7 @@ var fsext = {
 
         /**
          * Reloads the current display of the URLs API.
-         * 
+         *
          * @param {boolean} blnForceCacheOverride Pass true if you want to force a reload from API
          */
         reloadLinks: function (blnForceCacheOverride) {
@@ -396,25 +448,25 @@ var fsext = {
 
             let blnPerformRefresh = false;
 
-            if (localStorage[fsext.STORAGE_KEY_API_URLS_DATA] == null || localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL] == null) {
+            if (fsext.storage.getRaw(fsext.STORAGE_KEY_API_URLS_DATA) == null || fsext.storage.getRaw(fsext.STORAGE_KEY_API_URLS_LAST_CALL) == null) {
                 fsext.log("fsext.popup.reloadLinks() - api not called before - setting blnPerformRefresh to true.");
                 blnPerformRefresh = true;
             }
             else if (blnForceCacheOverride !== true) {
 
                 let dttmNow = new Date(); // get the date to compare with the last one.
-                let dttmLastChecked = (localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL] != null ? new Date(parseInt(localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL])) : new Date((new Date()).getFullYear(), 0, 1));
+                let dttmLastChecked = (fsext.storage.getRaw(fsext.STORAGE_KEY_API_URLS_LAST_CALL) != null ? new Date(parseInt(fsext.storage.getRaw(fsext.STORAGE_KEY_API_URLS_LAST_CALL))) : new Date((new Date()).getFullYear(), 0, 1));
 
                 fsext.log("fsext.popup.reloadLinks() - data last refreshed: " + dttmLastChecked);
 
                 let blnPerformRefresh = blnForceCacheOverride || false;
 
-                if ((dttmLastChecked.getTime() + (fsext.STORAGE_LIFETIME*1000)) <= dttmNow) {
+                if ((dttmLastChecked.getTime() + (fsext.STORAGE_LIFETIME * 1000)) <= dttmNow) {
                     fsext.log("fsext.popup.reloadLinks() - stored data is stale... refresh it!");
-                    blnPerformRefresh = true; 
+                    blnPerformRefresh = true;
                 }
 
-            } 
+            }
 
             if (blnPerformRefresh !== true) {
                 fsext.log("fsext.popup.reloadLinks() - using stored data - it's newish!");
@@ -422,13 +474,13 @@ var fsext = {
             }
             else {
                 fsext.log("fsext.popup.reloadLinks() - stored data is about to be refreshed!");
-                let fnc_callback = function(jsonData) {
+                let fnc_callback = function (jsonData) {
                     fsext.log("BEGIN DATA");
                     fsext.log(jsonData);
                     fsext.log("END DATA");
                     fsext.popup.linksRender(jsonData);
                     fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonData);
-                    localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL] = new Date().getTime();
+                    fsext.storage.setRaw(fsext.STORAGE_KEY_API_URLS_LAST_CALL, new Date().getTime());
                 };
                 fsext.api.urlsGetMostRecent(fnc_callback);
             }
@@ -437,7 +489,7 @@ var fsext = {
 
         /**
          * Reloads the current display of popup.
-         * 
+         *
          * @param {boolean} blnForceCacheOverride Pass true if you want to force a reload from API
          */
         refresh: function (blnForceCacheOverride) {
@@ -450,15 +502,18 @@ var fsext = {
 
         /**
          * Renders the URLs from the API response into the popup.
-         * 
+         *
          * @param {string||JSON Object} jsonData Data from the API
          */
         linksRender: function (jsonData) {
+            fsext.log("fsext.popup.linksRender();");
             //fsext.log(jsonData);
 
             if (jsonData === null || typeof (jsonData) === 'undefined') jsonData = fsext.storage.get(fsext.STORAGE_KEY_API_URLS_DATA);
 
-            let channel = document.getElementById('hfChannel').value;
+            let channel = fsext.storage.getRaw(fsext.STORAGE_KEY_URLS_CHANNEL_FILTER_LAST_SELECTED) || "all";
+
+            fsext.log("fsext.popup.linksRender(); channel filter: " + channel);
 
             let lt = document.getElementById('links-table');
             let ltt = document.getElementById('links-table-template');
@@ -469,7 +524,7 @@ var fsext = {
             let filter_channels = document.getElementById('dynamic-channels');
             filter_channels.innerHTML = '';
 
-            
+
             for (let i = 0; i < jsonData.results.length; i++) {
                 let link = jsonData.results[i];
 
@@ -477,14 +532,14 @@ var fsext = {
                     channels.push(link.to);
                     filter_channels.innerHTML += '<span class="filter-option" data-value="' + link.to + '">' + link.to + '</span>';
                 }
-                
+
                 if (channel != 'all' && link.to != channel) continue;
 
                 if (link.title === null || typeof (link.title) === 'undefined') {
                     link.title = (link.url.length < 67 ? link.url : "No title - hover to see URL");
                 }
 
-                let str = TEMPLATE;      
+                let str = TEMPLATE;
                 str = str.replace(/##DTTM##/g, new Date(link.timestamp).toLocaleDateString() + " " + new Date(link.timestamp).format("H:MM"));
                 str = str.replace(/##NICK##/g, link.from);
                 str = str.replace(/##URL##/g, link.url);
@@ -495,12 +550,12 @@ var fsext = {
 
             let els = document.querySelectorAll(".filter-option:not([onclick])");
             for (let i = 0; i < els.length; i++) {
-                els[i].addEventListener("click", function(e) {
+                els[i].addEventListener("click", function (e) {
                     let chan = e.target.getAttribute('data-value');
                     fsext.popup.changeChannelFilterLinks(chan);
                 });
             }
-            
+
             els = document.querySelectorAll(".filter-option");
             for (let i = 0; i < els.length; i++) {
                 let el = els[i];
@@ -516,51 +571,54 @@ var fsext = {
 
         /**
          * Handles clicks from channel filter options.
-         * 
+         *
          * @param {string} channel Which channel to display. Or 'all'
          */
         changeChannelFilterLinks: function (channel) {
             fsext.log("fsext.popup.changeChannelFilterLinks(); - channel: " + channel);
 
-            document.getElementById('hfChannel').value = channel;
+            // store channel selected for next load.
+            fsext.storage.setRaw(fsext.STORAGE_KEY_URLS_CHANNEL_FILTER_LAST_SELECTED, channel);
 
             fsext.popup.reloadLinks();
         }
-        
+
     },
 
-    
+
     /**
      * options.html Methods & Routines
      */
     options: {
-            
+
         /**
          * Handles setup of the options page
          */
         init: function () {
             fsext.log("fsext.options.init();");
-            fsext.localization.localizeHtmlPage();
-            
+
             // Add event listeners once the DOM has fully loaded by listening for the
             // `DOMContentLoaded` event on the document, and adding your listeners to
             // specific elements when it triggers.
             document.addEventListener('DOMContentLoaded', fsext.options.onDOMContentLoaded);
         },
-        
+
 
         /**
          * Executes when the page is loaded to the end.
          */
         onDOMContentLoaded: function () {
             fsext.log("fsext.options.onDOMContentLoaded();");
+            
+            fsext.localization.localizeHtmlPage();
+            
             //btnSave
             document.getElementById('btnSave').addEventListener('click', function (e) { fsext.options.saveSettings(); });
             //document.querySelector('button').addEventListener('click', btnSave_Click);
 
             fsext.options.populateSettings();
 
-            
+
             let txtUserToken = document.getElementById("txtUserToken");
             if (txtUserToken.value.length == 0) txtUserToken.focus();
         },
@@ -580,21 +638,61 @@ var fsext = {
 
         /**
          * Saves the user settings to Chrome's localStorage
-         */            
+         */
         saveSettings: function () {
             fsext.log("fsext.options.saveSettings();");
             let txtUserToken = document.getElementById("txtUserToken");
             let strUserToken = txtUserToken.value;
             fsext.log("fsext.options.saveSettings() - user token: " + strUserToken);
-            
+
             // Store the user token.
-            
+
             fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, strUserToken);
             //getStatsByNick(setBadge);
 
             let divMessage = document.getElementById('divMessage');
             divMessage.innerHTML = "<div class=\"success\">__MSG_fsext_options_saved__</span>";
             fsext.localization.replace_i18n(divMessage, divMessage.innerHTML);
+        }
+
+    },
+
+    
+    /**
+     * background.html Methods & Routines
+     */
+    background: {
+
+        /**
+         * Initializes the background.html page.
+         */
+        init: function () {
+            fsext.log("fsext.background.init();");
+                
+            // Add event listeners once the DOM has fully loaded by listening for the
+            // `DOMContentLoaded` event on the document, and adding your listeners to
+            // specific elements when it triggers.
+            document.addEventListener('DOMContentLoaded', fsext.background.onDOMContentLoaded);
+        },
+
+
+        /**
+         * Refreshes the data
+         */
+        refresh: function () { 
+            fsext.log("fsext.background.refresh();");            
+        },
+
+
+        /**
+         * Executes when the page is loaded to the end.
+         */
+        onDOMContentLoaded: function () {
+            fsext.log("fsext.background.onDOMContentLoaded();");
+            
+            fsext.localization.localizeHtmlPage();
+            
+            setInterval(function() { fsext.background.refresh(); }, fsext.BACKGROUND_REFRESH_FREQUENCY*1000);
         }
 
     }

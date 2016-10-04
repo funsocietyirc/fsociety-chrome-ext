@@ -64,5 +64,15 @@
     },
     "fsext_popup_channel_filter_text": {
         "message": "Channel"
+    },
+    "fsext_links_url": {
+        "message": "https://irony.fsociety.guru/links"
+    },
+    "fsext_popup_links_seemore_text": {
+        "message": "See more"
+    },
+    "fsext_popup_all_channels_text": {
+        "message": "ALL CHANNELS"
     }
+    
 }
