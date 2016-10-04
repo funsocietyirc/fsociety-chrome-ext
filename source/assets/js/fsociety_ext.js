@@ -226,7 +226,7 @@ var fsext = {
                     if (req.readyState == 4) {
                         let data = req.responseText;
                         if (typeof (data) === 'undefined' || data.length == 0) return;
-                        fsext.log("fsext.api.urlsGetMostRecent() - reqeuest received -- " + data.length.toString() + " characters long");
+                        fsext.log("fsext.api.urlsGetMostRecent() - request received -- " + data.length.toString() + " characters long");
                         let jsonData = JSON.parse(data);
                         if (typeof (fnc_callback) === 'function') fnc_callback(jsonData);
                     }
@@ -423,11 +423,14 @@ var fsext = {
             else {
                 fsext.log("fsext.popup.reloadLinks() - stored data is about to be refreshed!");
                 let fnc_callback = function(jsonData) {
+                    fsext.log("BEGIN DATA");
+                    fsext.log(jsonData);
+                    fsext.log("END DATA");
                     fsext.popup.linksRender(jsonData);
                     fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonData);
                     localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL] = new Date().getTime();
                 };
-                fsext.api.urlsGetMostRecent(0, fnc_callback);
+                fsext.api.urlsGetMostRecent(fnc_callback);
             }
         },
 
