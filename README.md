@@ -11,7 +11,7 @@ found below.
 
 1. Enable Chrome's Developer mode:
     * Go to chrome://extensions/ and check the "Developer mode" checkbox at the top.
-2. Clone this git repository.  
+2. Clone this git repository, or download the zip so you have the files on your harddrive.  
 3. Click the "Load unpacked extension..." button on chrome://extensions/.
 4. Point it to the location you stored the /source directory on your harddirve.
 
