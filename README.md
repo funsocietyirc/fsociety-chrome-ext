@@ -6,6 +6,7 @@ IronY's efforts with MrNodeBot, and the web.  The extension will eventually be m
 for all our users on the Chrome Web Store.  Temporary installation instructions can be 
 found below.
 
+
 ## Installation
 
 1. Enable Chrome's Developer mode:
@@ -16,12 +17,14 @@ found below.
 
 That's it!
 
+
 ## Todo
 * Authorize the user token on save and once every 50 api calls.
 * Delay API calls if too quickly.
 * Connect with Pusher API to receive data via websocket.
 * Context menu "Share to IRC"
 * Notifications & Nick Highlights
+
 
 ## Join us on IRC
 Freenode IRC:  irc.freenode.net #fsociety
