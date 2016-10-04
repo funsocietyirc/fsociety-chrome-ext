@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------------- 
 #fsociety Extension for Google Chrome
 
-file version:   0.5
+file version:   0.51
 date:           2016-10-03
 author:         David Richer (IronY) & Jay Baldwin (Darc)
 irc:            irc.freenode.net #fsociety
@@ -15,40 +15,150 @@ DATE         AUTHOR     CHANGES
 
 "use strict";
 
+/**
+ * fsociety extension
+ */
 var fsext = {
     
-    API_TIMEOUT: 5,                         // number of seconds required between user-initiated API calls
-    STORAGE_LIFETIME: (1*60),               // number of seconds before internal data is considered stale and needs to be refreshed 
+    /* Constants and configuration
+    -----------------------------------------------------------------------------*/
+    
+    /**
+     * Number of seconds required between user-initiated API calls
+     * 
+     * @const
+     * @type {integer}
+     */
+    API_TIMEOUT: 5,
+    
+
+    /**
+     * Number of seconds before internal data is considered stale and needs to be 
+     * refreshed
+     * 
+     * @const
+     * @type {integer}
+     */
+    STORAGE_LIFETIME: (1*60),  
+    
+
+    /**
+     * Should we output to the console?  Should NOT be true in production.
+     * 
+     * @const
+     * @type {boolean}
+     */
     ENABLE_LOG: true,
+    
+
+    /**
+     * Key that is used to store the MrNodeBot User Token in Chrome's localStorage
+     * 
+     * @const
+     * @type {string}
+     */
     STORAGE_KEY_USERTOKEN: "userToken",
+
+
+    /**
+     * Key that is used to store the datetime the URLs API was last called in 
+     * Chrome's localStorage
+     * 
+     * @const
+     * @type {string}
+     */
     STORAGE_KEY_API_URLS_LAST_CALL: "api_urls_last_call",
+
+
+    /**
+     * Key that is used to store the DATA from the last  URLs API call in 
+     * Chrome's localStorage
+     * 
+     * @const
+     * @type {string}
+     */
     STORAGE_KEY_API_URLS_DATA: "api_urls_data",
 
+
+    /* API URLs
+    -----------------------------------------------------------------------------*/
+
+    /**
+     * Collection of production API URLs
+     * 
+     * @type {array}
+     */
     api_urls: {
         urls: "https://bot.fsociety.guru/api/urls"
     },
-        
+    
+
+
+    /* Helper Functions
+    -----------------------------------------------------------------------------*/
+
+    /**
+     * Logs to the console if the configuration allows.
+     */
     log: function(str) {
+        // We don't need to log the use of the log function. ;)
         if (fsext.ENABLE_LOG !== true) return;
-        
+
         if (typeof (console) === 'undefined' || typeof (console.log) === 'undefined') return;
+
         console.log(str);
     },
+    
 
-    // helpers to access chrome localStorage
+    /**
+     * Returns localized value of message from messages.json file.
+     * 
+     * @param {string} key Name of the message.
+     * @return {string} Localized message.
+     */
+    getMessage: function (key) {
+        return chrome.i18n.getMessage(key);
+    },
+
+
+    /** 
+     * Helpers to access chrome localStorage
+     */
     storage: {
+
+        /**
+         * Stores string or JSON data in Chrome's localStorage
+         * 
+         * @param {string} key Key or name of the variable
+         * @param {string||JSON object} obj Value to store 
+         */
         set: function (key, obj) {
             fsext.log("fsext.storage.set();");
             let values = JSON.stringify(obj);
             localStorage.setItem(key, values);
         },
 
+
+        /**
+         * Gets string or JSON data from Chrome's localStorage
+         * 
+         * @param {string} key Key or name of the variable
+         * @return {string||JSON object} Value requested 
+         */
         get: function (key) {
             fsext.log("fsext.storage.get();");
             if (localStorage.getItem(key) == null) return false;
             return JSON.parse(localStorage.getItem(key));
         },
+        
 
+        /**
+         * Updates key that already exists in JSON object to new value
+         * and stores in Chrome's localStorage
+         * 
+         * @param {string} key Key or name of the variable
+         * @return {string||JSON object} newData Value requested 
+         */
         update: function (key, newData) {
             fsext.log("fsext.storage.update();");
             if (localStorage.getItem(key) == null) return false;
@@ -59,31 +169,66 @@ var fsext = {
             }
             let values = JSON.stringify(oldData);
             localStorage.setItem(key, values);
+        },
+
+
+        /**
+         * Gets string from Chrome's localStorage
+         * 
+         * @param {string} key Key or name of the variable
+         * @return {string} Value requested 
+         */
+        getRaw: function (key) {
+            return localStorage[key];
+        },
+
+
+        /**
+         * Stores string in Chrome's localStorage
+         * 
+         * @param {string} key Key or name of the variable
+         * @param {string} obj Value to store 
+         */
+        setRaw: function (key, value) {
+            localStorage[key] = value;
         }
+
     },
 
 
-    // API methods for calling MrNodeBot's features! :)
+    /* API Methods
+    -----------------------------------------------------------------------------*/
+
+    /**
+     * API methods for calling MrNodeBot's features! :)
+     */
     api: {
-        urlsGetMostRecent: function (intNumberToGet, fnc_callback) {
+
+        /**
+         * Retrieves most recent URLs from the API
+         * 
+         * @param {function} fnc_callback Callback to handle API response asynchronously.
+         *      Function must have a parameter for response data to be passed through.
+         */
+        urlsGetMostRecent: function (fnc_callback) {
             fsext.log("fsext.api.urlsGetMostRecent();");
 
             // TODO - escape API calls if too many too quickly.
             
-            let strApiUrl = fsext.api_urls.urls;
-            fsext.log("fsext.api.urlsGetMostRecent() - sending API request to " + strApiUrl);
+            let url = fsext.api_urls.urls;
+            fsext.log("fsext.api.urlsGetMostRecent() - sending API request to " + url);
             
-            // initiate the api call
+            // Initiate the api call
             try {
                 let req = new XMLHttpRequest();
-                req.open("GET", strApiUrl, true);
+                req.open("GET", url, true);
                 req.onreadystatechange = function() {
                     if (req.readyState == 4) {
                         let data = req.responseText;
                         if (typeof (data) === 'undefined' || data.length == 0) return;
                         fsext.log("fsext.api.urlsGetMostRecent() - reqeuest received -- " + data.length.toString() + " characters long");
                         let jsonData = JSON.parse(data);
-                        fnc_callback(jsonData);
+                        if (typeof (fnc_callback) === 'function') fnc_callback(jsonData);
                     }
                 }
                 req.send(null);
@@ -93,20 +238,35 @@ var fsext = {
     },
 
 
-    // this function used for chrome localization
+    /* Native Chrome Implementations
+    -----------------------------------------------------------------------------*/
+
+    /**
+     * Facilitates Chrome localization
+     */
     localization: {
-    
+
+        /**
+         * Replaces __MSG_(\w+)__ variables in object obj with their localized versions
+         * in the messages.json file.
+         * 
+         * @param {object} obj HTML element to search for i18n variables.
+         * @param {string} tag i18n variable to look for
+         */
         replace_i18n: function (obj, tag) {
             fsext.log("fsext.localization.replace_i18n();");
             let msg = tag.replace(/__MSG_(\w+)__/g, function(match, v1) {
-                return v1 ? chrome.i18n.getMessage(v1) : '';
+                return (v1 ? chrome.i18n.getMessage(v1) : '');
             });
 
             if (msg !== tag) obj.innerHTML = msg;
         },
 
 
-        // chrome extension default for non-hosted set
+        /**
+         * Replaces __MSG_(\w+)__ variables in the DOM with their localized versions
+         * in the messages.json file.
+         */
         localizeHtmlPage: function () {
             // Localize using __MSG_***__ data tags
             let data = document.querySelectorAll('[data-localize]');
@@ -131,10 +291,54 @@ var fsext = {
 
     },
 
+
     
-    // this section used with popup.html
+    /**
+     * Facilitates Chrome notifications
+     */
+    notifications: {
+        create: function (title, msg) {
+            fsext.log("fsext.notifications.create(); Title: [" + title + "] - Message: [" + msg + "]");
+            if (
+                fsext.notifications.current 
+                && typeof (fsext.notifications.current) !== 'undefined'
+                && typeof (fsext.notifications.current.cancel) !== 'undefined'
+            ) fsext.notifications.current.cancel()
+
+            let notification = {
+                "type": "basic",
+                "iconUrl": "/assets/images/icon_128.png",
+                "title": title,
+                "message": msg
+            };
+
+            chrome.notifications.create("", notification, function () { });
+        },
+
+
+        /**
+         * Sets the badge on the extension icon on the toolbar.
+         * 
+         * @param {object} 
+         */
+        setBadge: function (options) {
+            
+        }
+
+    },
+
+
+    /* Support functions for Popup|Options|Background pages
+    -----------------------------------------------------------------------------*/
+
+    /**
+     * popup.html Methods & Routines
+     */
     popup: {
             
+        /**
+         * Handles setup of the popup
+         */
         init: function () {
             fsext.log("fsext.popup.init();");
             fsext.localization.localizeHtmlPage();
@@ -156,14 +360,23 @@ var fsext = {
             gate.style.display = 'none';
             authed.style.display = 'block';
 
+            // Bind click events to buttons that require javascript. Chrome doesn't let you put 
+            // JS inline.
             let lnkInfo = document.getElementById('lnkInfo');
             lnkInfo.onclick = function () { alert(chrome.i18n.getMessage("fsext_info")); };
+
             let lnkRefresh = document.getElementById('lnkRefresh');
             lnkRefresh.onclick = fsext.popup.refresh;
 
             fsext.popup.refresh();
         },
 
+
+        /**
+         * Reloads the current display of the URLs API.
+         * 
+         * @param {boolean} blnForceCacheOverride Pass true if you want to force a reload from API
+         */
         reloadLinks: function (blnForceCacheOverride) {
             fsext.log("fsext.popup.reloadLinks();");
 
@@ -204,6 +417,12 @@ var fsext = {
             }
         },
 
+
+        /**
+         * Reloads the current display of popup.
+         * 
+         * @param {boolean} blnForceCacheOverride Pass true if you want to force a reload from API
+         */
         refresh: function (blnForceCacheOverride) {
             fsext.log("fsext.popup.refresh();");
             let lt = document.getElementById('links-table');
@@ -211,6 +430,12 @@ var fsext = {
             fsext.popup.reloadLinks(blnForceCacheOverride);
         },
 
+
+        /**
+         * Renders the URLs from the API response into the popup.
+         * 
+         * @param {string||JSON Object} jsonData Data from the API
+         */
         linksRender: function (jsonData) {
             //fsext.log(jsonData);
 
@@ -258,7 +483,6 @@ var fsext = {
                     fsext.popup.changeChannelFilterLinks(chan);
                 });
             }
-
             
             els = document.querySelectorAll(".filter-option");
             for (let i = 0; i < els.length; i++) {
@@ -272,6 +496,12 @@ var fsext = {
             lt.innerHTML = compiled_links;
         },
 
+
+        /**
+         * Handles clicks from channel filter options.
+         * 
+         * @param {string} channel Which channel to display. Or 'all'
+         */
         changeChannelFilterLinks: function (channel) {
             fsext.log("fsext.popup.changeChannelFilterLinks(); - channel: " + channel);
 
@@ -283,9 +513,14 @@ var fsext = {
     },
 
     
-    // this section used with options.html
+    /**
+     * options.html Methods & Routines
+     */
     options: {
             
+        /**
+         * Handles setup of the options page
+         */
         init: function () {
             fsext.log("fsext.options.init();");
             fsext.localization.localizeHtmlPage();
@@ -296,6 +531,10 @@ var fsext = {
             document.addEventListener('DOMContentLoaded', fsext.options.onDOMContentLoaded);
         },
         
+
+        /**
+         * Executes when the page is loaded to the end.
+         */
         onDOMContentLoaded: function () {
             fsext.log("fsext.options.onDOMContentLoaded();");
             //btnSave
@@ -309,6 +548,10 @@ var fsext = {
             if (txtUserToken.value.length == 0) txtUserToken.focus();
         },
 
+
+        /**
+         * Populates the user settings from Chrome's localStorage
+         */
         populateSettings: function () {
             fsext.log("fsext.options.populateSettings();");
             let strUserToken = fsext.storage.get(fsext.STORAGE_KEY_USERTOKEN);
@@ -316,7 +559,11 @@ var fsext = {
             let txtUserToken = document.getElementById("txtUserToken");
             txtUserToken.value = strUserToken;
         },
-            
+
+
+        /**
+         * Saves the user settings to Chrome's localStorage
+         */            
         saveSettings: function () {
             fsext.log("fsext.options.saveSettings();");
             let txtUserToken = document.getElementById("txtUserToken");
