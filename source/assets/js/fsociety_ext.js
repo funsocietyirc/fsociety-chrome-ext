@@ -21,6 +21,8 @@ var fsext = {
     STORAGE_LIFETIME: (1*60),               // number of seconds before internal data is considered stale and needs to be refreshed 
     ENABLE_LOG: true,
     STORAGE_KEY_USERTOKEN: "userToken",
+    STORAGE_KEY_API_URLS_LAST_CALL: "api_urls_last_call",
+    STORAGE_KEY_API_URLS_DATA: "api_urls_data",
 
     api_urls: {
         urls: "https://bot.fsociety.guru/api/urls"
@@ -37,7 +39,7 @@ var fsext = {
     storage: {
         set: function (key, obj) {
             fsext.log("fsext.storage.set();");
-            var values = JSON.stringify(obj);
+            let values = JSON.stringify(obj);
             localStorage.setItem(key, values);
         },
 
@@ -51,11 +53,11 @@ var fsext = {
             fsext.log("fsext.storage.update();");
             if (localStorage.getItem(key) == null) return false;
 
-            var oldData = JSON.parse(localStorage.getItem(key));
+            let oldData = JSON.parse(localStorage.getItem(key));
             for (keyObj in newData) {
                 oldData[keyObj] = newData[keyObj];
             }
-            var values = JSON.stringify(oldData);
+            let values = JSON.stringify(oldData);
             localStorage.setItem(key, values);
         }
     },
@@ -68,19 +70,19 @@ var fsext = {
 
             // TODO - escape API calls if too many too quickly.
             
-            var strApiUrl = fsext.api_urls.urls;
+            let strApiUrl = fsext.api_urls.urls;
             fsext.log("fsext.api.urlsGetMostRecent() - sending API request to " + strApiUrl);
             
             // initiate the api call
             try {
-                var req = new XMLHttpRequest();
+                let req = new XMLHttpRequest();
                 req.open("GET", strApiUrl, true);
                 req.onreadystatechange = function() {
                     if (req.readyState == 4) {
-                        var data = req.responseText;
+                        let data = req.responseText;
                         if (typeof (data) === 'undefined' || data.length == 0) return;
                         fsext.log("fsext.api.urlsGetMostRecent() - reqeuest received -- " + data.length.toString() + " characters long");
-                        var jsonData = JSON.parse(data);
+                        let jsonData = JSON.parse(data);
                         fnc_callback(jsonData);
                     }
                 }
@@ -96,7 +98,7 @@ var fsext = {
     
         replace_i18n: function (obj, tag) {
             fsext.log("fsext.localization.replace_i18n();");
-            var msg = tag.replace(/__MSG_(\w+)__/g, function(match, v1) {
+            let msg = tag.replace(/__MSG_(\w+)__/g, function(match, v1) {
                 return v1 ? chrome.i18n.getMessage(v1) : '';
             });
 
@@ -107,21 +109,21 @@ var fsext = {
         // chrome extension default for non-hosted set
         localizeHtmlPage: function () {
             // Localize using __MSG_***__ data tags
-            var data = document.querySelectorAll('[data-localize]');
+            let data = document.querySelectorAll('[data-localize]');
 
-            for (var i in data) if (data.hasOwnProperty(i)) {
-                var obj = data[i];
-                var tag = obj.getAttribute('data-localize').toString();
+            for (let i in data) if (data.hasOwnProperty(i)) {
+                let obj = data[i];
+                let tag = obj.getAttribute('data-localize').toString();
 
                 fsext.localization.replace_i18n(obj, tag);
             }
 
             // Localize everything else by replacing all __MSG_***__ tags
-            var page = document.getElementsByTagName('html');
+            let page = document.getElementsByTagName('html');
 
-            for (var j = 0; j < page.length; j++) {
-                var obj = page[j];
-                var tag = obj.innerHTML.toString();
+            for (let j = 0; j < page.length; j++) {
+                let obj = page[j];
+                let tag = obj.innerHTML.toString();
 
                 fsext.localization.replace_i18n(obj, tag);
             }
@@ -137,8 +139,8 @@ var fsext = {
             fsext.log("fsext.popup.init();");
             fsext.localization.localizeHtmlPage();
 
-            var strUserToken = localStorage[fsext.STORAGE_KEY_USERTOKEN];
-            var blnUserAuthenticated = (strUserToken && strUserToken.replace(" ","").length > 0);
+            let strUserToken = localStorage[fsext.STORAGE_KEY_USERTOKEN];
+            let blnUserAuthenticated = (strUserToken && strUserToken.replace(" ","").length > 0);
             fsext.log((blnUserAuthenticated ? "User Token is: " + strUserToken : "NO USER TOKEN SPECIFIED!"));
 
             // escape so we don't let the users do more, cool things. 
@@ -149,14 +151,14 @@ var fsext = {
             // we can trust that you're a real user.  We optionally may want to re-check every 
             // 50th hit to verify we didn't turn the user token off on the back-end.
 
-            var gate = document.getElementById('gate');
-            var authed = document.getElementById('authed');
+            let gate = document.getElementById('gate');
+            let authed = document.getElementById('authed');
             gate.style.display = 'none';
             authed.style.display = 'block';
 
-            var lnkInfo = document.getElementById('lnkInfo');
+            let lnkInfo = document.getElementById('lnkInfo');
             lnkInfo.onclick = function () { alert(chrome.i18n.getMessage("fsext_info")); };
-            var lnkRefresh = document.getElementById('lnkRefresh');
+            let lnkRefresh = document.getElementById('lnkRefresh');
             lnkRefresh.onclick = fsext.popup.refresh;
 
             fsext.popup.refresh();
@@ -165,22 +167,20 @@ var fsext = {
         reloadLinks: function (blnForceCacheOverride) {
             fsext.log("fsext.popup.reloadLinks();");
 
-            var blnPerformRefresh = false;
-            var storageKeyCallTime = "api_urls_last_call";
-            var storageKey = "api_urls_data";
+            let blnPerformRefresh = false;
 
-            if (localStorage[storageKey] == null || localStorage[storageKeyCallTime] == null) {
+            if (localStorage[fsext.STORAGE_KEY_API_URLS_DATA] == null || localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL] == null) {
                 fsext.log("fsext.popup.reloadLinks() - api not called before - setting blnPerformRefresh to true.");
                 blnPerformRefresh = true;
             }
             else if (blnForceCacheOverride !== true) {
 
-                var dttmNow = new Date(); // get the date to compare with the last one.
-                var dttmLastChecked = (localStorage[storageKeyCallTime] != null ? new Date(parseInt(localStorage[storageKeyCallTime])) : new Date((new Date()).getFullYear(), 0, 1));
+                let dttmNow = new Date(); // get the date to compare with the last one.
+                let dttmLastChecked = (localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL] != null ? new Date(parseInt(localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL])) : new Date((new Date()).getFullYear(), 0, 1));
 
                 fsext.log("fsext.popup.reloadLinks() - data last refreshed: " + dttmLastChecked);
 
-                var blnPerformRefresh = blnForceCacheOverride || false;
+                let blnPerformRefresh = blnForceCacheOverride || false;
 
                 if ((dttmLastChecked.getTime() + (fsext.STORAGE_LIFETIME*1000)) <= dttmNow) {
                     fsext.log("fsext.popup.reloadLinks() - stored data is stale... refresh it!");
@@ -189,58 +189,16 @@ var fsext = {
 
             } 
 
-            var fnc_data_handler = function (jsonData) {
-                //fsext.log(jsonData);
-
-                var channel = document.getElementById('hfChannel').value;
-
-                var lt = document.getElementById('links-table');
-                var ltt = document.getElementById('links-table-template');
-                var TEMPLATE = ltt.innerHTML;
-                var compiled_links = "";
-
-                var channels = new Array();
-                var filter_channels = document.getElementById('dynamic-channels');
-
-                
-                for (var i = 0; i < jsonData.results.length; i++) {
-                    var link = jsonData.results[i];
-
-                    if (channels.indexOf(link.to) === -1) {
-                        channels.push(link.to);
-                        filter_channels.innerHTML += '<span class="filter-option">' + link.to + '</span>';
-                    }
-                    
-                    if (channel != 'all' && link.to != channel) continue;
-
-                    if (link.title === null || typeof (link.title) === 'undefined') {
-                        link.title = (link.url.length < 67 ? link.url : "No title - hover to see URL");
-                    }
-
-                    var str = TEMPLATE;      
-                    str = str.replace(/##DTTM##/g, new Date(link.timestamp).toLocaleDateString() + " " + new Date(link.timestamp).format("H:MM"));
-                    str = str.replace(/##NICK##/g, link.from);
-                    str = str.replace(/##URL##/g, link.url);
-                    str = str.replace(/##TITLE##/g, link.title);
-
-                    compiled_links += str;
-                }
-
-
-
-                lt.innerHTML = compiled_links;
-            };
-
             if (blnPerformRefresh !== true) {
                 fsext.log("fsext.popup.reloadLinks() - using stored data - it's newish!");
-                fnc_data_handler(fsext.storage.get(storageKey))
+                fsext.popup.linksRender(fsext.storage.get(fsext.STORAGE_KEY_API_URLS_DATA))
             }
             else {
                 fsext.log("fsext.popup.reloadLinks() - stored data is about to be refreshed!");
-                var fnc_callback = function(jsonData) {
-                    fnc_data_handler(jsonData);
-                    fsext.storage.set(storageKey, jsonData);
-                    localStorage[storageKeyCallTime] = new Date().getTime();
+                let fnc_callback = function(jsonData) {
+                    fsext.popup.linksRender(jsonData);
+                    fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonData);
+                    localStorage[fsext.STORAGE_KEY_API_URLS_LAST_CALL] = new Date().getTime();
                 };
                 fsext.api.urlsGetMostRecent(0, fnc_callback);
             }
@@ -248,15 +206,76 @@ var fsext = {
 
         refresh: function (blnForceCacheOverride) {
             fsext.log("fsext.popup.refresh();");
-            var lt = document.getElementById('links-table');
+            let lt = document.getElementById('links-table');
             lt.innerHTML = '';
             fsext.popup.reloadLinks(blnForceCacheOverride);
+        },
+
+        linksRender: function (jsonData) {
+            //fsext.log(jsonData);
+
+            if (jsonData === null || typeof (jsonData) === 'undefined') jsonData = fsext.storage.get(fsext.STORAGE_KEY_API_URLS_DATA);
+
+            let channel = document.getElementById('hfChannel').value;
+
+            let lt = document.getElementById('links-table');
+            let ltt = document.getElementById('links-table-template');
+            let TEMPLATE = ltt.innerHTML;
+            let compiled_links = "";
+
+            let channels = new Array();
+            let filter_channels = document.getElementById('dynamic-channels');
+            filter_channels.innerHTML = '';
+
+            
+            for (let i = 0; i < jsonData.results.length; i++) {
+                let link = jsonData.results[i];
+
+                if (channels.indexOf(link.to) === -1) {
+                    channels.push(link.to);
+                    filter_channels.innerHTML += '<span class="filter-option" data-value="' + link.to + '">' + link.to + '</span>';
+                }
+                
+                if (channel != 'all' && link.to != channel) continue;
+
+                if (link.title === null || typeof (link.title) === 'undefined') {
+                    link.title = (link.url.length < 67 ? link.url : "No title - hover to see URL");
+                }
+
+                let str = TEMPLATE;      
+                str = str.replace(/##DTTM##/g, new Date(link.timestamp).toLocaleDateString() + " " + new Date(link.timestamp).format("H:MM"));
+                str = str.replace(/##NICK##/g, link.from);
+                str = str.replace(/##URL##/g, link.url);
+                str = str.replace(/##TITLE##/g, link.title);
+
+                compiled_links += str;
+            }
+
+            let els = document.querySelectorAll(".filter-option:not([onclick])");
+            for (let i = 0; i < els.length; i++) {
+                els[i].addEventListener("click", function(e) {
+                    let chan = e.target.getAttribute('data-value');
+                    fsext.popup.changeChannelFilterLinks(chan);
+                });
+            }
+
+            
+            els = document.querySelectorAll(".filter-option");
+            for (let i = 0; i < els.length; i++) {
+                let el = els[i];
+                let chan = el.getAttribute('data-value');
+
+                if (chan.toLowerCase() == channel.toLowerCase()) el.classList.add('selected');
+                else if (chan.toLowerCase() != channel.toLowerCase()) el.classList.remove('selected');
+            }
+
+            lt.innerHTML = compiled_links;
         },
 
         changeChannelFilterLinks: function (channel) {
             fsext.log("fsext.popup.changeChannelFilterLinks(); - channel: " + channel);
 
-            
+            document.getElementById('hfChannel').value = channel;
 
             fsext.popup.reloadLinks();
         }
@@ -288,16 +307,16 @@ var fsext = {
 
         populateSettings: function () {
             fsext.log("fsext.options.populateSettings();");
-            var strUserToken = fsext.storage.get(fsext.STORAGE_KEY_USERTOKEN);
+            let strUserToken = fsext.storage.get(fsext.STORAGE_KEY_USERTOKEN);
             if (!strUserToken) return;
-            var txtUserToken = document.getElementById("txtUserToken");
+            let txtUserToken = document.getElementById("txtUserToken");
             txtUserToken.value = strUserToken;
         },
             
         saveSettings: function () {
             fsext.log("fsext.options.saveSettings();");
-            var txtUserToken = document.getElementById("txtUserToken");
-            var strUserToken = txtUserToken.value;
+            let txtUserToken = document.getElementById("txtUserToken");
+            let strUserToken = txtUserToken.value;
             fsext.log("fsext.options.saveSettings() - user token: " + strUserToken);
             
             // Store the user token.
@@ -305,7 +324,7 @@ var fsext = {
             fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, strUserToken);
             //getStatsByNick(setBadge);
 
-            var divMessage = document.getElementById('divMessage');
+            let divMessage = document.getElementById('divMessage');
             divMessage.innerHTML = "<div class=\"success\">__MSG_fsext_options_saved__</span>";
             fsext.localization.replace_i18n(divMessage, divMessage.innerHTML);
         }
