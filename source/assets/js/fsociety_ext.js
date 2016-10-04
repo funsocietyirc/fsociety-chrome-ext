@@ -319,10 +319,24 @@ var fsext = {
         /**
          * Sets the badge on the extension icon on the toolbar.
          * 
-         * @param {object} 
+         * @param {object} options JSON object with "text" and "backgroundColor" properties.
          */
         setBadge: function (options) {
+            fsext.log("fsext.notifications.setBadge();");
             
+            if (typeof (options) === 'undefined') {
+                chrome.browserAction.setBadgeText("");
+                return;
+            }
+
+            if (typeof (options.text) !== 'undefined') {
+                chrome.browserAction.setBadgeText({text: options.text});
+            }
+
+            if (typeof (options.backgroundColor) !== 'undefined') {
+                chrome.browserAction.setBadgeBackgroundColor({color: options.backgroundColor});
+            }
+
         }
 
     },
