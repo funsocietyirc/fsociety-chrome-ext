@@ -112,7 +112,7 @@ button, input[type="submit"], a.button
     margin-top: 0.625em;
     border: none;
     font: inherit;
-    color: #fff;
+    color: #fff !important;
     font-weight: bold;
     text-shadow: 0 0.15em 0.2em rgba(0,0,0,0.9);
     box-shadow: 0 0 0.2em 0.1em rgba(0,0,0,1);

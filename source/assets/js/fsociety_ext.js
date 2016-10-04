@@ -303,6 +303,10 @@ var fsext = {
             //document.querySelector('button').addEventListener('click', btnSave_Click);
 
             fsext.options.populateSettings();
+
+            
+            let txtUserToken = document.getElementById("txtUserToken");
+            if (txtUserToken.value.length == 0) txtUserToken.focus();
         },
 
         populateSettings: function () {
