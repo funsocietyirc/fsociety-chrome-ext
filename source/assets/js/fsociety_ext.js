@@ -117,6 +117,10 @@ var fsext = {
     STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK: "fsext_channels_to_notify_on_link",
 
 
+
+    /* API URLs
+    -----------------------------------------------------------------------------*/
+
     /**
      * Pusher instance holder for URLs
      *
@@ -150,15 +154,16 @@ var fsext = {
          * - type (def:null|images)
          * - sort (def:desc|asc)
          */
-        urls: "https://bot.fsociety.guru/api/urls?pageSize=50"
+        urls:                   "https://bot.fsociety.guru/api/urls?pageSize=50",
+
+        // Authorize MrNodeBot token.  Returns your nick.
+        auth_token:             "https://bot.fsociety.guru/api/getNickByToken"  // Receives POST variable "token"
     },
 
 
 
     /* Helper Functions
     -----------------------------------------------------------------------------*/
-
-    notificationsClickActionsByID: new Array(),
 
     /**
      * Logs to the console if the configuration allows.
@@ -172,6 +177,9 @@ var fsext = {
         console.log(str);
     },
 
+    /**
+     * Returns a rfc4122 version 4 compliant GUID 
+     */
     newGuid: function () {
         // Taken from http://stackoverflow.com/a/2117523 
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -246,26 +254,8 @@ var fsext = {
 
             jsonCachedData.results = jsonResults;
 
-            // let str_results = JSON.stringify(jsonResults);
-
-            // console.log("CACHED RESULTS ONLY: ")
-            // console.log(str_results);
-
-            // let new_results = JSON.stringify(data) + "," + str_results;
-
-            // console.log("NEW RESULTS: ")
-            // console.log(new_results); 
-
-            // jsonCachedData.results = JSON.parse(new_results);
-
-            //let new_data = JSON.stringify(jsonCachedData);
-
-            // console.log("ALL DATA: ")
-            // console.log(JSON.stringify(jsonCachedData));
-
             fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonCachedData);
             
-
             let blnNotify = (fsext.storage.getRaw(fsext.STORAGE_KEY_NOTIFICATION_ON_LINK) == "true");
             let strChannels = fsext.storage.get(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK);
 
@@ -405,6 +395,16 @@ var fsext = {
     api: {
 
         /**
+         * Stub for when API calls can be rate-limited.
+         * @return {boolean} True if it's been too close to the last call to make another 
+         */
+        rateLimitCheck: function () {
+            // TODO - escape API calls if too many too quickly.
+            return false;
+        },
+
+
+        /**
          * Retrieves most recent URLs from the API
          *
          * @param {function} fnc_callback Callback to handle API response asynchronously.
@@ -413,7 +413,11 @@ var fsext = {
         urlsGetMostRecent: function (fnc_callback) {
             fsext.log("fsext.api.urlsGetMostRecent();");
 
-            // TODO - escape API calls if too many too quickly.
+            if (fsext.api.rateLimitCheck()) {
+                fsext.log("fsext.api.urlsGetMostRecent(); - rate limit exceeded. exiting.");
+                // TODO - don't hard return if rate limited... wait and try again for user.
+                return; 
+            }
 
             let url = fsext.api_urls.urls;
             fsext.log("fsext.api.urlsGetMostRecent() - sending API request to " + url);
@@ -434,6 +438,48 @@ var fsext = {
                 req.send(null);
             }
             catch (err) { }
+
+            fsext.log("fsext.api.urlsGetMostRecent(); -- api call completed.");
+        },
+
+
+        /**
+         * Attempts to authorize a single MrNodeBot user-channel token.
+         * 
+         * @param {string} token user-channel token to validate
+         * @param {function} fnc_callback Callback to handle API response asynchronously.
+         *      Function must have a parameter for response data to be passed through.
+         */
+        authToken: function (token, fnc_callback) {
+            fsext.log("fsext.api.authToken(); -- token: " + token);
+
+            if (fsext.api.rateLimitCheck()) {
+                fsext.log("fsext.api.authToken(); - rate limit exceeded. exiting.");
+                // TODO - don't hard return if rate limited... wait and try again for user.
+                return; 
+            }
+
+            let url = fsext.api_urls.auth_token;
+            fsext.log("fsext.api.authToken() - sending API request to " + url);
+
+            // Initiate the api call
+            try {
+                let req = new XMLHttpRequest();
+                req.open("POST", url, true);
+                req.onreadystatechange = function () {
+                    if (req.readyState == 4) {
+                        let data = req.responseText;
+                        if (typeof (data) === 'undefined' || data.length == 0) return;
+                        fsext.log("fsext.api.authToken() - request received -- " + data.length.toString() + " characters long");
+                        let jsonData = JSON.parse(data);
+                        if (typeof (fnc_callback) === 'function') fnc_callback(jsonData);
+                    }
+                }
+                req.send("token=" + token);
+            }
+            catch (err) { }
+
+            fsext.log("fsext.api.authToken(); -- api call completed.");
         }
     },
 
@@ -499,6 +545,11 @@ var fsext = {
 
         clickActionsByID: [],
 
+        /**
+         * Handle a click from a Chrome notification
+         * 
+         * @param {string} notificationId GUID or user-specified ID of the notification instance
+         */
         clickHandler: function (notificationId) {
             fsext.log("fsext.notifications.clickHandler(); notificationId: " + notificationId);
             
@@ -514,6 +565,12 @@ var fsext = {
         },
 
 
+        /**
+         * Create Chrome notification
+         * 
+         * @param {object} options Specified options for the creation of the notification. See 
+         *      chrome.notifications API for more information.
+         */
         create: function (options) {
             fsext.log("fsext.notifications.create();");
             
