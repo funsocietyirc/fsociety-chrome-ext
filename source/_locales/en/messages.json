@@ -44,6 +44,9 @@
     "fsext_options_save_label": {
         "message": "Save"
     },
+    "fsext_options_yournick": {
+        "message": "Welcome,"
+    },
     "fsext_options_title": {
         "message": "Options"
     },

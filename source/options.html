@@ -14,6 +14,10 @@
     <div>
         <h1>__MSG_fsext_name__ - __MSG_fsext_options_title__</h1>
 
+        <div id="welcome">
+                <strong>__MSG_fsext_options_yournick__ <span id="nick_field"></span>!</strong>
+        </div>
+
         <div class="logo">
             <img src="/assets/images/icon_128.png" alt="fsociety" />
         </div>
@@ -27,7 +31,14 @@
             <div id="divMessage"></div>
 
             <div class="form-label">__MSG_fsext_options_usertoken_label__</div>
-            <input type="text" id="txtUserToken" placeholder="__MSG_fsext_options_usertoken_label__" />
+            <input type="text" id="txtUserToken" placeholder="__MSG_fsext_options_usertoken_label__" /> 
+            
+            <img id="token_valid" class="validation-check" src="/assets/images/valid.svg" alt="valid" /> 
+            <img id="token_invalid" class="validation-check"  src="/assets/images/invalid.svg" alt="invalid" />
+            <div class="clear-both"></div>
+
+            
+
             <br /><br />
 
             <label><input type="checkbox" id="chkNotifyOnLinks" /> __MSG_fsext_options_notifyonlinks_label__</label>

@@ -13,7 +13,23 @@ body > div {
 
 .form-label { font-weight: bold; margin-bottom: 0.5em; }
 
+input[type="text"] { 
+    z-index: 1;
+    position: relative;
+}
 
 /* Contact styles */
 
 .contact-info { margin-top: 2em; }
+
+.validation-check {
+    height: 2em;
+    margin-top: -2.3em;
+    margin-right: 0.25em;
+    float: right;
+    z-index: 2;
+    position: relative;
+    display: none;
+}
+
+#welcome { display: none; }

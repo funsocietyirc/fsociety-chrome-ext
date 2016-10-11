@@ -154,10 +154,10 @@ var fsext = {
          * - type (def:null|images)
          * - sort (def:desc|asc)
          */
-        urls:                   "https://bot.fsociety.guru/api/urls?pageSize=50",
+        urls: "https://bot.fsociety.guru/api/urls?pageSize=50",
 
         // Authorize MrNodeBot token.  Returns your nick.
-        auth_token:             "https://bot.fsociety.guru/api/getNickByToken"  // Receives POST variable "token"
+        auth_token: "https://bot.fsociety.guru/api/getNickByToken"  // Receives POST variable "token"
     },
 
 
@@ -182,8 +182,8 @@ var fsext = {
      */
     newGuid: function () {
         // Taken from http://stackoverflow.com/a/2117523 
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
     },
@@ -214,21 +214,21 @@ var fsext = {
             fsext.log("fsext.pusher.checkDependency();");
             return (typeof (Pusher) !== 'undefined');
         },
-        
+
 
         /**
          * Initiate an instance of Pusher and bind to the appropriate channels.
          */
         init: function () {
             fsext.log("fsext.pusher.init();");
-            
+
             if (!fsext.pusher.checkDependency()) {
                 fsext.log("fsext.pusher.init(); - exiting.  Pusher not found or instantiated.");
                 return;
             }
 
             fsext.pusherURLs = new Pusher('9d0bcd17badf5ab7cc79', { encrypted: true });
-            fsext.pusherURLsPublicChannel = fsext.pusherURLs.subscribe('public'); 
+            fsext.pusherURLsPublicChannel = fsext.pusherURLs.subscribe('public');
 
             fsext.pusherURLsPublicChannel.bind('url', fsext.pusher.pushHandlerUrls);
             fsext.pusherURLsPublicChannel.bind('image', fsext.pusher.pushHandlerImages);
@@ -240,7 +240,7 @@ var fsext = {
          */
         pushHandlerUrlsAndImages: function (data) {
             fsext.log("fsext.pusher.pushHandlerUrlsAndImages();");
-            
+
             let jsonCachedData = fsext.storage.get(fsext.STORAGE_KEY_API_URLS_DATA);
 
             if (typeof (jsonCachedData) === 'undefined' || typeof (jsonCachedData.results) === 'undefined') {
@@ -255,7 +255,7 @@ var fsext = {
             jsonCachedData.results = jsonResults;
 
             fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonCachedData);
-            
+
             let blnNotify = (fsext.storage.getRaw(fsext.STORAGE_KEY_NOTIFICATION_ON_LINK) == "true");
             let strChannels = fsext.storage.get(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK);
 
@@ -268,8 +268,8 @@ var fsext = {
 
                 for (let i = 0; i < aryChannels.length; i++) {
                     if (channel.toLowerCase() == aryChannels[i].toLowerCase()) blnNotify = true;
-                }             
-                
+                }
+
                 if (blnNotify) {
                     let title = "Link from " + nick + " to " + channel;
 
@@ -285,7 +285,7 @@ var fsext = {
 
                     fsext.storage.setRaw("notif_" + id, data.url);
                 }
-                
+
             }
         },
 
@@ -409,14 +409,15 @@ var fsext = {
          *
          * @param {function} fnc_callback Callback to handle API response asynchronously.
          *      Function must have a parameter for response data to be passed through.
+         * @param {function} fnc_error Callback to handle errors.
          */
-        urlsGetMostRecent: function (fnc_callback) {
+        urlsGetMostRecent: function (fnc_callback, fnc_error) {
             fsext.log("fsext.api.urlsGetMostRecent();");
 
             if (fsext.api.rateLimitCheck()) {
                 fsext.log("fsext.api.urlsGetMostRecent(); - rate limit exceeded. exiting.");
                 // TODO - don't hard return if rate limited... wait and try again for user.
-                return; 
+                return;
             }
 
             let url = fsext.api_urls.urls;
@@ -437,7 +438,9 @@ var fsext = {
                 }
                 req.send(null);
             }
-            catch (err) { }
+            catch (err) {
+                if (typeof (fnc_error) === 'function') fnc_error(err);
+            }
 
             fsext.log("fsext.api.urlsGetMostRecent(); -- api call completed.");
         },
@@ -449,14 +452,38 @@ var fsext = {
          * @param {string} token user-channel token to validate
          * @param {function} fnc_callback Callback to handle API response asynchronously.
          *      Function must have a parameter for response data to be passed through.
+         * @param {function} fnc_error Callback to handle errors.
          */
-        authToken: function (token, fnc_callback) {
+        authToken: function (token, fnc_callback, fnc_error) {
             fsext.log("fsext.api.authToken(); -- token: " + token);
 
             if (fsext.api.rateLimitCheck()) {
                 fsext.log("fsext.api.authToken(); - rate limit exceeded. exiting.");
                 // TODO - don't hard return if rate limited... wait and try again for user.
-                return; 
+                return;
+            }
+
+            // The API is broken so this is here for now...
+            // TODO let the API take the hit when IronY fixes it.. :P  10/11/2016
+            if (true == true) {
+
+                var error = {
+                    "status": "error",
+                    "result": null
+                };
+                var success = {
+                    "status": "success",
+                    "user": {
+                        "user": "Darc",
+                        "channel": "#fsociety",
+                        "timestamp": "2016-10-04T07:04:18.000Z"
+                    }
+                };
+
+                if (typeof (fnc_callback) === 'function') fnc_callback(token == "error" ? error : success);
+
+                
+                return;
             }
 
             let url = fsext.api_urls.auth_token;
@@ -477,7 +504,9 @@ var fsext = {
                 }
                 req.send("token=" + token);
             }
-            catch (err) { }
+            catch (err) {
+                if (typeof (fnc_error) === 'function') fnc_error(err);
+            }
 
             fsext.log("fsext.api.authToken(); -- api call completed.");
         }
@@ -552,7 +581,7 @@ var fsext = {
          */
         clickHandler: function (notificationId) {
             fsext.log("fsext.notifications.clickHandler(); notificationId: " + notificationId);
-            
+
             let url = fsext.storage.getRaw("notif_" + notificationId);
 
             fsext.log("fsext.notifications.clickHandler(); url: " + url);
@@ -573,14 +602,14 @@ var fsext = {
          */
         create: function (options) {
             fsext.log("fsext.notifications.create();");
-            
+
             if (!options) {
                 console.error("fsext.notifications.create(); - No options provided.")
                 return;
             }
 
             //fsext.log(options);
-            
+
             if (
                 fsext.notifications.current
                 && typeof (fsext.notifications.current) !== 'undefined'
@@ -594,8 +623,8 @@ var fsext = {
             //     "message": msg
             // };
 
-            let id = fsext.newGuid(); 
-            
+            let id = fsext.newGuid();
+
             chrome.notifications.create(id, options, function () { });
 
             setTimeout(function () {
@@ -604,8 +633,8 @@ var fsext = {
                     fsext.notifications.current
                     && typeof (fsext.notifications.current) !== 'undefined'
                     && typeof (fsext.notifications.current.cancel) !== 'undefined'
-                ) fsext.notifications.current.cancel(); 
-            }, (options.timeout || 1000*5));
+                ) fsext.notifications.current.cancel();
+            }, (options.timeout || 1000 * 5));
 
             return id;
         },
@@ -660,7 +689,7 @@ var fsext = {
         init: function () {
             fsext.log("fsext.popup.init();");
 
-            
+
             // Add event listeners once the DOM has fully loaded by listening for the
             // `DOMContentLoaded` event on the document, and adding your listeners to
             // specific elements when it triggers.
@@ -699,7 +728,7 @@ var fsext = {
             lnkInfo.onclick = function () { alert(chrome.i18n.getMessage("fsext_info")); };
 
             let lnkRefresh = document.getElementById('lnkRefresh');
-            lnkRefresh.onclick = function() { fsext.popup.refresh(); };
+            lnkRefresh.onclick = function () { fsext.popup.refresh(); };
 
             fsext.popup.refresh();
         },
@@ -877,9 +906,9 @@ var fsext = {
          */
         onDOMContentLoaded: function () {
             fsext.log("fsext.options.onDOMContentLoaded();");
-            
+
             fsext.localization.localizeHtmlPage();
-            
+
             //btnSave
             document.getElementById('btnSave').addEventListener('click', function (e) { fsext.options.saveSettings(); });
             //document.querySelector('button').addEventListener('click', btnSave_Click);
@@ -914,16 +943,96 @@ var fsext = {
 
 
         /**
+         * Handles the API response.
+         *
+         * @param {string||JSON Object} jsonData Data from the API
+         */
+        authTokenHandler: function (jsonData) {
+            fsext.log("fsext.options.authTokenHandler();");
+            fsext.log(jsonData);
+
+            let sent_token = window.sentUserToken;
+            window.sentUserToken = null;
+
+            let check_valid = document.getElementById('token_valid');
+            let check_invalid = document.getElementById('token_invalid');
+
+            if (typeof (jsonData) === 'undefined' || typeof (jsonData.status) === 'undefined') {
+                fsext.log("fsext.options.authTokenHandler(); - jsonData or jsonData.status undefined"); 
+                check_invalid.style.display = 'inline';
+                return;
+            }
+
+            let success = (jsonData.status == "success");
+
+            if (!success) {
+                check_invalid.style.display = 'inline';
+                return;
+            }
+
+            check_valid.style.display = 'inline';
+            
+            // Store the token since we know it's good.
+            fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, sent_token);
+
+            let welcome = document.getElementById('welcome');
+            let nick_field = document.getElementById('nick_field');
+
+            nick_field.innerHTML = jsonData.user.user;
+            welcome.style.display = 'block';
+            
+            // All is well
+            let divMessage = document.getElementById('divMessage');
+            divMessage.innerHTML = "<div class=\"success\">__MSG_fsext_options_saved__</span>";
+            fsext.localization.replace_i18n(divMessage, divMessage.innerHTML);
+        },
+
+
+        /**
+         * Validate the User Token
+         */
+        authToken: function (token) {
+            fsext.log("fsext.options.authToken();");
+            
+                        
+            let check_valid = document.getElementById('token_valid');
+            let check_invalid = document.getElementById('token_invalid');
+            let welcome = document.getElementById('welcome');
+            check_valid.style.display = 'none';
+            check_invalid.style.display = 'none';
+            welcome.style.display = 'none';
+
+            let strUserToken = token;
+
+            if (typeof (strUserToken) === 'undefined') {
+                let txtUserToken = document.getElementById("txtUserToken");
+                strUserToken = txtUserToken.value;
+            }
+            
+            fsext.log("fsext.options.saveSettings() - token entered was: " + strUserToken);
+
+            var fnc_error = function(err) {
+                fsext.log("fnc_error() --> fsext.options.authTokenHandler() --> fsext.options.authToken()");
+                window.sentUserToken = null;
+            };
+
+            // Store the token in the window so we know what we sent to save it next time.
+            if (typeof (window.sentUserToken) === 'undefined') window.sentUserToken = strUserToken;
+                        
+            fsext.api.authToken(strUserToken, fsext.options.authTokenHandler, fnc_error);
+        },
+
+
+        /**
          * Saves the user settings to Chrome's localStorage
          */
         saveSettings: function () {
             fsext.log("fsext.options.saveSettings();");
 
-            // User Token
-            let txtUserToken = document.getElementById("txtUserToken");
-            let strUserToken = txtUserToken.value;
-            fsext.log("fsext.options.saveSettings() - user token: " + strUserToken);
-            fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, strUserToken);
+            let divMessage = document.getElementById('divMessage');
+            divMessage.innerHTML = '';
+
+            // Store the settings you can before we touch the Internet.
 
             // Notify on links
             let chkNotifyOnLinks = document.getElementById("chkNotifyOnLinks");
@@ -936,14 +1045,23 @@ var fsext = {
             fsext.log("fsext.options.saveSettings() - channels to watch: " + strChannelsToWatchForLinks);
             fsext.storage.set(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK, strChannelsToWatchForLinks);
 
-            let divMessage = document.getElementById('divMessage');
-            divMessage.innerHTML = "<div class=\"success\">__MSG_fsext_options_saved__</span>";
-            fsext.localization.replace_i18n(divMessage, divMessage.innerHTML);
+
+            // User Token
+            let txtUserToken = document.getElementById("txtUserToken");
+            let strUserToken = txtUserToken.value;
+            fsext.log("fsext.options.saveSettings() - token entered was: " + strUserToken);
+
+
+            fsext.options.authToken(strUserToken);
+            //fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, strUserToken);
+
+
+            // Don't write a save message here, because the save is conditional on the token being correct.
         }
 
     },
 
-    
+
     /**
      * background.html Methods & Routines
      */
@@ -956,9 +1074,9 @@ var fsext = {
             fsext.log("fsext.background.init();");
 
             chrome.notifications.onClicked.addListener(function (notificationId) {
-                fsext.notifications.clickHandler(notificationId); 
+                fsext.notifications.clickHandler(notificationId);
             });
-                
+
             // Add event listeners once the DOM has fully loaded by listening for the
             // `DOMContentLoaded` event on the document, and adding your listeners to
             // specific elements when it triggers.
@@ -999,14 +1117,14 @@ var fsext = {
          */
         onDOMContentLoaded: function () {
             fsext.log("fsext.background.onDOMContentLoaded();");
-            
+
             fsext.localization.localizeHtmlPage();
 
             fsext.pusher.init();
-            
+
             fsext.background.refresh();
-            setInterval(function() { fsext.background.refresh(); }, fsext.BACKGROUND_REFRESH_FREQUENCY*1000);
-            
+            setInterval(function () { fsext.background.refresh(); }, fsext.BACKGROUND_REFRESH_FREQUENCY * 1000);
+
         }
 
     }
