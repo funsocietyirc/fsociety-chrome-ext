@@ -340,37 +340,44 @@ var fsext = {
 
             fsext.storage.set(fsext.STORAGE_KEY_API_URLS_DATA, jsonCachedData);
 
+
+            // Should we raise a notification?
+
+            // First, check the settings
             let blnNotify = (fsext.storage.getRaw(fsext.STORAGE_KEY_NOTIFICATION_ON_LINK) == "true");
+
+            if (!blnNotify) return;
+
+
+            // Is the channel in the watch list in the settings?
             let strChannels = fsext.storage.get(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK);
+            let aryChannels = strChannels.split(",");
 
-            if (blnNotify) {
-                let nick = data.from;
-                let channel = data.to;
+            let channel = data.to;
+            
+            blnNotify = false;
 
-                let aryChannels = strChannels.split(",");
-                blnNotify = false;
-
-                for (let i = 0; i < aryChannels.length; i++) {
-                    if (channel.toLowerCase() == aryChannels[i].toLowerCase()) blnNotify = true;
-                }
-
-                if (blnNotify) {
-                    let title = "Link from " + nick + " to " + channel;
-
-                    let notification = {
-                        "type": "basic",
-                        "iconUrl": "/assets/images/icon_128.png",
-                        "title": title,
-                        "message": (data.url + (data.title ? "\r\nTitle: " + data.title : "")),
-                        "isClickable": true
-                    };
-
-                    let id = fsext.notifications.create(notification);
-
-                    fsext.storage.setRaw("notif_" + id, data.url);
-                }
-
+            for (let i = 0; i < aryChannels.length; i++) {
+                if (channel.toLowerCase() == aryChannels[i].toLowerCase()) blnNotify = true;
             }
+
+            if (!blnNotify) return;
+
+
+            // Prepare the notification 
+
+            let notification = {
+                options: {
+                    "type": "basic",
+                    "iconUrl": "/assets/images/icon_128.png",
+                    "title": (data.from + " to " + channel),
+                    "message": (data.url + (data.title ? "\r\nTitle: " + data.title : ""))
+                },
+                "isClickable": true,
+                "requestedId" : data.shortUrl
+            };
+
+            let id = fsext.notifications.create(notification);     
         },
 
 
@@ -666,13 +673,13 @@ var fsext = {
         clickHandler: function (notificationId) {
             fsext.log("fsext.notifications.clickHandler(); notificationId: " + notificationId);
 
-            let url = fsext.storage.getRaw("notif_" + notificationId);
+            let url = (notificationId.indexOf('http') == 0 ? notificationId : fsext.storage.getRaw("notif_" + notificationId));
 
             fsext.log("fsext.notifications.clickHandler(); url: " + url);
 
             if (typeof (url) !== 'undefined' && url != null) chrome.tabs.create({ "url": url });
 
-            fsext.storage.setRaw("notif_" + notificationId, null);
+            if (notificationId.indexOf('http') == 0) fsext.storage.setRaw("notif_" + notificationId, null);
 
             chrome.notifications.clear(notificationId);
         },
@@ -707,18 +714,19 @@ var fsext = {
             //     "message": msg
             // };
 
-            let id = fsext.newGuid();
+            //let id = fsext.newGuid();
+            let id = (typeof (options) !== 'undefined' && typeof (options.requestedId) !== 'undedined' ? options.requestedId : fsext.newGuid());
 
-            chrome.notifications.create(id, options, function () { });
+            chrome.notifications.create(id, options.options, function () { });
 
-            setTimeout(function () {
-                fsext.storage.setRaw("notif_" + id, null);
-                if (
-                    fsext.notifications.current
-                    && typeof (fsext.notifications.current) !== 'undefined'
-                    && typeof (fsext.notifications.current.cancel) !== 'undefined'
-                ) fsext.notifications.current.cancel();
-            }, (options.timeout || 1000 * 5));
+            // setTimeout(function () {
+            //     fsext.storage.setRaw("notif_" + id, null);
+            //     if (
+            //         fsext.notifications.current
+            //         && typeof (fsext.notifications.current) !== 'undefined'
+            //         && typeof (fsext.notifications.current.cancel) !== 'undefined'
+            //     ) fsext.notifications.current.cancel();
+            // }, (options.timeout || 1000 * 5));
 
             return id;
         },
