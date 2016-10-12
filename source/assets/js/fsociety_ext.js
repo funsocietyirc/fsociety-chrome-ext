@@ -52,12 +52,48 @@ var fsext = {
 
 
     /**
+     * Debugging?  Should NOT be true in production.
+     *
+     * @const
+     * @type {boolean}
+     */
+    DEBUG_MODE: true,
+
+
+    /**
      * Should we output to the console?  Should NOT be true in production.
      *
      * @const
      * @type {boolean}
      */
     ENABLE_LOG: true,
+
+
+    /**
+     * Should we output info to the console?
+     *
+     * @const
+     * @type {boolean}
+     */
+    ENABLE_INFO_OUTPUT: true,
+
+
+    /**
+     * Should we output warnings to the console?
+     *
+     * @const
+     * @type {boolean}
+     */
+    ENABLE_WARN_OUTPUT: true,
+
+
+    /**
+     * Should we output errors to the console?
+     *
+     * @const
+     * @type {boolean}
+     */
+    ENABLE_ERROR_OUTPUT: true,
 
 
     /**
@@ -167,6 +203,8 @@ var fsext = {
 
     /**
      * Logs to the console if the configuration allows.
+     * 
+     * @param {string} str Message to write to console
      */
     log: function (str) {
         // We don't need to log the use of the log function. ;)
@@ -174,8 +212,54 @@ var fsext = {
 
         if (typeof (console) === 'undefined' || typeof (console.log) === 'undefined') return;
 
-        console.log(str);
+        console.log('[LOG] ' + str);
     },
+
+
+    /**
+     * Logs info to the console if the configuration allows.
+     * 
+     * @param {string} str Message to write to console
+     */
+    info: function (str) {
+        // We don't need to log the use of the log function. ;)
+        if (fsext.ENABLE_INFO_OUTPUT !== true) return;
+
+        if (typeof (console) === 'undefined' || typeof (console.info) === 'undefined') return;
+
+        console.info('[INFO] ' + str);
+    },
+
+
+    /**
+     * Logs warnings to the console if the configuration allows.
+     * 
+     * @param {string} str Message to write to console
+     */
+    warn: function (str) {
+        // We don't need to log the use of the log function. ;)
+        if (fsext.ENABLE_WARN_OUTPUT !== true) return;
+
+        if (typeof (console) === 'undefined' || typeof (console.warn) === 'undefined') return;
+
+        console.warn('[WARN] ' + str);
+    },
+
+
+    /**
+     * Logs warnings to the console if the configuration allows.
+     * 
+     * @param {string} str Message to write to console
+     */
+    error: function (str) {
+        // We don't need to log the use of the log function. ;)
+        if (fsext.ENABLE_ERROR_OUTPUT !== true) return;
+
+        if (typeof (console) === 'undefined' || typeof (console.error) === 'undefined') return;
+
+        console.error('[ERROR] ' + str);
+    },
+
 
     /**
      * Returns a rfc4122 version 4 compliant GUID 
@@ -911,7 +995,6 @@ var fsext = {
 
             //btnSave
             document.getElementById('btnSave').addEventListener('click', function (e) { fsext.options.saveSettings(); });
-            //document.querySelector('button').addEventListener('click', btnSave_Click);
 
             fsext.options.populateSettings();
 
@@ -992,8 +1075,7 @@ var fsext = {
          * Validate the User Token
          */
         authToken: function (token) {
-            fsext.log("fsext.options.authToken();");
-            
+            fsext.log("fsext.options.authToken();");            
                         
             let check_valid = document.getElementById('token_valid');
             let check_invalid = document.getElementById('token_invalid');
@@ -1012,7 +1094,7 @@ var fsext = {
             fsext.log("fsext.options.saveSettings() - token entered was: " + strUserToken);
 
             var fnc_error = function(err) {
-                fsext.log("fnc_error() --> fsext.options.authTokenHandler() --> fsext.options.authToken()");
+                fsext.error("fnc_error() --> fsext.options.authTokenHandler() --> fsext.options.authToken()");
                 window.sentUserToken = null;
             };
 
@@ -1045,16 +1127,13 @@ var fsext = {
             fsext.log("fsext.options.saveSettings() - channels to watch: " + strChannelsToWatchForLinks);
             fsext.storage.set(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK, strChannelsToWatchForLinks);
 
-
             // User Token
             let txtUserToken = document.getElementById("txtUserToken");
             let strUserToken = txtUserToken.value;
             fsext.log("fsext.options.saveSettings() - token entered was: " + strUserToken);
 
-
+            // Send the entered Auth Token to the API and handle the rest in the callback.
             fsext.options.authToken(strUserToken);
-            //fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, strUserToken);
-
 
             // Don't write a save message here, because the save is conditional on the token being correct.
         }
