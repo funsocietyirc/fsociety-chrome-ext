@@ -687,8 +687,8 @@ var fsext = {
         create: function (options) {
             fsext.log("fsext.notifications.create();");
 
-            if (!options) {
-                console.error("fsext.notifications.create(); - No options provided.")
+            if (typeof (options) === 'undefined' || typeof (options.options) === 'undefined') {
+                console.warn("fsext.notifications.create(); - No options provided.")
                 return;
             }
 
