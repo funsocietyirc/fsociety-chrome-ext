@@ -31,7 +31,6 @@ That's it!
 
 ## Todo
 * Authorize the user token on save and once every 50 api calls.
-* Delay API calls if too quickly.
 * Context menu "Share to IRC"
 * Nick Highlights
 

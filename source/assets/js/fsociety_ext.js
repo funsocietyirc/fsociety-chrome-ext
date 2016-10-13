@@ -24,12 +24,30 @@ var fsext = {
     -----------------------------------------------------------------------------*/
 
     /**
-     * Number of seconds required between user-initiated API calls
+     * Number of seconds that defines API rate limiting period.
      *
      * @const
      * @type {integer}
      */
-    API_TIMEOUT: 5,
+    API_TIMEOUT: 60,
+
+
+    /**
+     * Number of API calls allowed in period.
+     *
+     * @const
+     * @type {integer}
+     */
+    API_TIMEOUT_MAX_CALLS: 10,
+
+
+    /**
+     * Rate limited try-again delay in seconds
+     *
+     * @const
+     * @type {integer}
+     */
+    RATE_LIMIT_DELAY: 5,
 
 
     /**
@@ -103,6 +121,16 @@ var fsext = {
      * @type {string}
      */
     STORAGE_KEY_USERTOKEN: "fsext_userToken",
+
+
+    /**
+     * Key that is used to store the User's nick associated with the MrNodeBot User Token 
+     *      in Chrome's localStorage
+     *
+     * @const
+     * @type {string}
+     */
+    STORAGE_KEY_USERNICK: "fsext_userNick",
 
 
     /**
@@ -213,6 +241,8 @@ var fsext = {
         if (typeof (console) === 'undefined' || typeof (console.log) === 'undefined') return;
 
         console.log('[LOG] ' + str);
+
+        if (typeof (str) !== 'string') console.log(str);
     },
 
 
@@ -354,7 +384,7 @@ var fsext = {
             let aryChannels = strChannels.split(",");
 
             let channel = data.to;
-            
+
             blnNotify = false;
 
             for (let i = 0; i < aryChannels.length; i++) {
@@ -374,10 +404,10 @@ var fsext = {
                     "message": (data.url + (data.title ? "\r\nTitle: " + data.title : ""))
                 },
                 "isClickable": true,
-                "requestedId" : data.shortUrl
+                "requestedId": data.shortUrl
             };
 
-            let id = fsext.notifications.create(notification);     
+            let id = fsext.notifications.create(notification);
         },
 
 
@@ -397,6 +427,30 @@ var fsext = {
             fsext.log("fsext.pusher.pushHandlerImages();");
             fsext.pusher.pushHandlerUrlsAndImages(data);
         }
+    },
+
+
+    /* Developer Tools
+    -----------------------------------------------------------------------------*/
+
+    /**
+     * Tools for development checking.
+     */
+    tools: {
+
+        /**
+         * FormData object logger.
+         */
+        formDataLog: function (formData) {
+            fsext.log("fsext.tools.formDataLog();");
+
+            if (typeof (formData) !== 'object' || typeof (formData.entries) !== 'function') return;
+
+            for (var pair of formData.entries()) {
+                fsext.log(pair[0] + ', ' + pair[1]);
+            }
+        }
+
     },
 
 
@@ -486,12 +540,67 @@ var fsext = {
     api: {
 
         /**
+         * Use to track # of API calls in a given moment.  
+         * @return {boolean} True if it's been too close to the last call to make another 
+         */
+        callCount: 0,
+
+
+        /**
+         * Use to track # of API calls in a given moment.  
+         * @return {boolean} True if it's been too close to the last call to make another 
+         */
+        callPeriodBeginDateTime: null,
+
+
+        /**
+         * Registers a call to the API. 
+         */
+        registerCall: function () {
+            fsext.log('fsext.api.registerCall();');
+
+            if (typeof (fsext.api.callPeriodBeginDateTime) === 'undefined' || fsext.api.callPeriodBeginDateTime === null) fsext.api.callPeriodBeginDateTime = new Date();
+
+            fsext.api.callCount++;
+        },
+
+
+        /**
+         * Clears the current API call cycle.
+         */
+        resetCallCount: function () {
+            fsext.log('fsext.api.resetCallCount();');
+
+            fsext.api.callPeriodBeginDateTime = null;
+            fsext.api.callCount = 0;
+        },
+
+
+        /**
          * Stub for when API calls can be rate-limited.
          * @return {boolean} True if it's been too close to the last call to make another 
          */
         rateLimitCheck: function () {
-            // TODO - escape API calls if too many too quickly.
-            return false;
+            fsext.log('fsext.api.rateLimitCheck();');
+
+            if (typeof (fsext.api.callCount) !== 'undefined') fsext.info('callCount: ' + fsext.api.callCount);
+            if (
+                typeof (fsext.api.callPeriodBeginDateTime) !== 'undefined' 
+                && fsext.api.callPeriodBeginDateTime !== null
+            )
+                fsext.info('callPeriodBeginDateTime: ' + fsext.api.callPeriodBeginDateTime);
+
+            let callCheckDateTime = new Date(fsext.api.callPeriodBeginDateTime + (fsext.API_TIMEOUT * 1000));
+            let now = new Date();
+
+            if (callCheckDateTime <= now) {
+                // Last call + timeout is in the past.  Reset.
+                fsext.api.resetCallCount();
+                return false;
+            }
+
+            // Escape API calls if too many too quickly.
+            return (fsext.api.callCount >= fsext.API_TIMEOUT_MAX_CALLS);
         },
 
 
@@ -507,9 +616,13 @@ var fsext = {
 
             if (fsext.api.rateLimitCheck()) {
                 fsext.log("fsext.api.urlsGetMostRecent(); - rate limit exceeded. exiting.");
-                // TODO - don't hard return if rate limited... wait and try again for user.
+
+                // Don't hard return if rate limited... wait and try again for user.
+                setTimeout(function () { fsext.api.urlsGetMostRecent(fnc_callback, fnc_error); }, fsext.RATE_LIMIT_DELAY * 1000);
                 return;
             }
+
+            fsext.api.registerCall();
 
             let url = fsext.api_urls.urls;
             fsext.log("fsext.api.urlsGetMostRecent() - sending API request to " + url);
@@ -550,32 +663,41 @@ var fsext = {
 
             if (fsext.api.rateLimitCheck()) {
                 fsext.log("fsext.api.authToken(); - rate limit exceeded. exiting.");
-                // TODO - don't hard return if rate limited... wait and try again for user.
+
+                // Don't hard return if rate limited... wait and try again for user.
+                setTimeout(function () { fsext.api.authToken(token, fnc_callback, fnc_error); }, fsext.RATE_LIMIT_DELAY * 1000);
                 return;
             }
 
-            // The API is broken so this is here for now...
-            // TODO let the API take the hit when IronY fixes it.. :P  10/11/2016
-            if (true == true) {
+            fsext.api.registerCall();
 
-                var error = {
-                    "status": "error",
-                    "result": null
-                };
-                var success = {
-                    "status": "success",
-                    "user": {
-                        "user": "Darc",
-                        "channel": "#fsociety",
-                        "timestamp": "2016-10-04T07:04:18.000Z"
-                    }
-                };
+            // // The API is broken so this is here for now...
+            // if (true == false) {
 
-                if (typeof (fnc_callback) === 'function') fnc_callback(token == "error" ? error : success);
+            //     var error = {
+            //         "status": "error",
+            //         "result": null
+            //     };
+            //     var success = {
+            //         "status": "success",
+            //         "user": {
+            //             "user": "Darc",
+            //             "channel": "#fsociety",
+            //             "timestamp": "2016-10-04T07:04:18.000Z"
+            //         }
+            //     };
 
-                
-                return;
-            }
+            //     if (typeof (fnc_callback) === 'function') fnc_callback(token == "error" ? error : success);
+
+
+            //     return;
+            // }
+
+            // Build our FormData object              
+            var formData = new FormData();
+            formData.append('token', token);
+            formData.append('test', 'test1');
+            //fsext.tools.formDataLog(formData);            
 
             let url = fsext.api_urls.auth_token;
             fsext.log("fsext.api.authToken() - sending API request to " + url);
@@ -583,7 +705,12 @@ var fsext = {
             // Initiate the api call
             try {
                 let req = new XMLHttpRequest();
-                req.open("POST", url, true);
+                req.open('POST', url, true);
+
+                // The Content-Type declaration is only necessary when using POST data in querystring format.
+                // It is not needed when we use the FormData() js object. 
+                //req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=utf-8');
+
                 req.onreadystatechange = function () {
                     if (req.readyState == 4) {
                         let data = req.responseText;
@@ -593,7 +720,9 @@ var fsext = {
                         if (typeof (fnc_callback) === 'function') fnc_callback(jsonData);
                     }
                 }
-                req.send("token=" + token);
+
+                //req.send('token=' + token);  
+                req.send(formData);
             }
             catch (err) {
                 if (typeof (fnc_error) === 'function') fnc_error(err);
@@ -801,26 +930,30 @@ var fsext = {
             let blnUserAuthenticated = (strUserToken && strUserToken.replace(" ", "").length > 0);
             fsext.log((blnUserAuthenticated ? "User Token is: " + strUserToken : "NO USER TOKEN SPECIFIED!"));
 
+            // Bind click events to buttons that require javascript. Chrome doesn't let you put
+
+            let title = chrome.runtime.getManifest().title;
+            let version = chrome.runtime.getManifest().version;
+            fsext.info('Loading ' + title + ' v' + version);
+
+            // JS inline.
+            let lnkInfo = document.getElementById('lnkInfo');
+            lnkInfo.onclick = function () { alert(chrome.i18n.getMessage("fsext_info").replace('##VERSION##', version)); };
+
             // escape so we don't let the users do more, cool things.
             if (!blnUserAuthenticated) return;
 
-            // If you pass here, the script believes you're authenticated.
-            // TODO: I'm planning to auth the user token on save, at which point I think
-            // we can trust that you're a real user.  We optionally may want to re-check every
+            // TODO: We optionally may want to re-check your user token every
             // 50th hit to verify we didn't turn the user token off on the back-end.
+
+
+            let lnkRefresh = document.getElementById('lnkRefresh');
+            lnkRefresh.onclick = function () { fsext.popup.refresh(); };            
 
             let gate = document.getElementById('gate');
             let authed = document.getElementById('authed');
             gate.style.display = 'none';
             authed.style.display = 'block';
-
-            // Bind click events to buttons that require javascript. Chrome doesn't let you put
-            // JS inline.
-            let lnkInfo = document.getElementById('lnkInfo');
-            lnkInfo.onclick = function () { alert(chrome.i18n.getMessage("fsext_info")); };
-
-            let lnkRefresh = document.getElementById('lnkRefresh');
-            lnkRefresh.onclick = function () { fsext.popup.refresh(); };
 
             fsext.popup.refresh();
         },
@@ -1021,6 +1154,13 @@ var fsext = {
             if (strUserToken) {
                 let txtUserToken = document.getElementById("txtUserToken");
                 txtUserToken.value = strUserToken;
+
+                let nick = fsext.storage.get(fsext.STORAGE_KEY_USERNICK);
+                let welcome = document.getElementById('welcome');
+                let nick_field = document.getElementById('nick_field');
+
+                nick_field.innerHTML = nick;
+                welcome.style.display = 'block';
             }
 
             let blnNotifyOnLink = (fsext.storage.getRaw(fsext.STORAGE_KEY_NOTIFICATION_ON_LINK) == "true");
@@ -1049,7 +1189,7 @@ var fsext = {
             let check_invalid = document.getElementById('token_invalid');
 
             if (typeof (jsonData) === 'undefined' || typeof (jsonData.status) === 'undefined') {
-                fsext.log("fsext.options.authTokenHandler(); - jsonData or jsonData.status undefined"); 
+                fsext.log("fsext.options.authTokenHandler(); - jsonData or jsonData.status undefined");
                 check_invalid.style.display = 'inline';
                 return;
             }
@@ -1062,16 +1202,20 @@ var fsext = {
             }
 
             check_valid.style.display = 'inline';
-            
+
             // Store the token since we know it's good.
             fsext.storage.set(fsext.STORAGE_KEY_USERTOKEN, sent_token);
 
+            let nick = jsonData.result.user;
             let welcome = document.getElementById('welcome');
             let nick_field = document.getElementById('nick_field');
 
-            nick_field.innerHTML = jsonData.user.user;
+            nick_field.innerHTML = nick;
             welcome.style.display = 'block';
-            
+
+            // Store the user nick given by the API.
+            fsext.storage.set(fsext.STORAGE_KEY_USERNICK, nick);
+
             // All is well
             let divMessage = document.getElementById('divMessage');
             divMessage.innerHTML = "<div class=\"success\">__MSG_fsext_options_saved__</span>";
@@ -1083,8 +1227,8 @@ var fsext = {
          * Validate the User Token
          */
         authToken: function (token) {
-            fsext.log("fsext.options.authToken();");            
-                        
+            fsext.log("fsext.options.authToken();");
+
             let check_valid = document.getElementById('token_valid');
             let check_invalid = document.getElementById('token_invalid');
             let welcome = document.getElementById('welcome');
@@ -1098,17 +1242,17 @@ var fsext = {
                 let txtUserToken = document.getElementById("txtUserToken");
                 strUserToken = txtUserToken.value;
             }
-            
-            fsext.log("fsext.options.saveSettings() - token entered was: " + strUserToken);
 
-            var fnc_error = function(err) {
+            fsext.info("fsext.options.authToken() - token entered was: " + strUserToken);
+
+            var fnc_error = function (err) {
                 fsext.error("fnc_error() --> fsext.options.authTokenHandler() --> fsext.options.authToken()");
                 window.sentUserToken = null;
             };
 
             // Store the token in the window so we know what we sent to save it next time.
             if (typeof (window.sentUserToken) === 'undefined') window.sentUserToken = strUserToken;
-                        
+
             fsext.api.authToken(strUserToken, fsext.options.authTokenHandler, fnc_error);
         },
 

@@ -34,7 +34,7 @@
     },
     "content_security_policy": "script-src 'self' https://js.pusher.com https://stats.pusher.com https://cdnjs.cloudflare.com; object-src 'self'",
     "update_url": "http://clients2.google.com/service/update2/crx",
-    "version": "0.51",
+    "version": "0.6",
     "web_accessible_resources": [
         "assets/images/icon2_128.png"
     ]
