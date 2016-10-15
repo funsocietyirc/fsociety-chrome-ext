@@ -182,7 +182,7 @@ var fsext = {
 
 
 
-    /* API URLs
+    /* Pusher Variables
     -----------------------------------------------------------------------------*/
 
     /**
@@ -381,6 +381,9 @@ var fsext = {
 
             // Is the channel in the watch list in the settings?
             let strChannels = fsext.storage.get(fsext.STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK);
+
+            if (typeof (strChannels) === 'undefined' || strChannels === '') return;
+
             let aryChannels = strChannels.split(",");
 
             let channel = data.to;
@@ -696,7 +699,6 @@ var fsext = {
             // Build our FormData object              
             var formData = new FormData();
             formData.append('token', token);
-            formData.append('test', 'test1');
             //fsext.tools.formDataLog(formData);            
 
             let url = fsext.api_urls.auth_token;
