@@ -181,6 +181,15 @@ var fsext = {
     STORAGE_KEY_CHANNELS_TO_NOTIFY_ON_LINK: "fsext_channels_to_notify_on_link",
 
 
+    /**
+     * Pusher App Key
+     * 
+     * @const 
+     * @type {string}
+     */
+    PUSHER_APP_KEY: '9d0bcd17badf5ab7cc79', // MrNodeBot
+
+
 
     /* Pusher Variables
     -----------------------------------------------------------------------------*/
@@ -199,6 +208,7 @@ var fsext = {
      * @type {Pusher PublicChannel object}
      */
     pusherURLsPublicChannel: null,
+
 
 
     /* API URLs
@@ -341,7 +351,7 @@ var fsext = {
                 return;
             }
 
-            fsext.pusherURLs = new Pusher('9d0bcd17badf5ab7cc79', { encrypted: true });
+            fsext.pusherURLs = new Pusher(fsext.PUSHER_APP_KEY, { encrypted: true });
             fsext.pusherURLsPublicChannel = fsext.pusherURLs.subscribe('public');
 
             fsext.pusherURLsPublicChannel.bind('url', fsext.pusher.pushHandlerUrls);
