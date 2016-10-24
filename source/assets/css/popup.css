@@ -1,4 +1,14 @@
-body {
+/*-----------------------------------------------------------------------------
+#fsociety Extension for Google Chrome
+
+author:         Jay Baldwin (Darc) 
+eml:            darc !AT! fsociety.guru
+irc:            irc.freenode.net #fsociety
+website:        fsociety.guru
+
+changelog & file version:
+https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/assets/css/popup.css
+------------------------------------------------------------------------body {
     width: 35em;
     background-size: cover;
 }

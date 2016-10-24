@@ -1,17 +1,19 @@
 /*-----------------------------------------------------------------------------
 #fsociety Extension for Google Chrome
 
-file version:   0.51
-date:           2016-10-03
-author:         David Richer (IronY) & Jay Baldwin (Darc)
-irc:            irc.freenode.net #fsociety
+
+
+author:         Jay Baldwin (Darc) 
+eml:            darc !AT! fsociety.girc:            irc.freenode.net #fsociety
 website:        fsociety.guru
 
-version history:
+guru
 
-DATE         AUTHOR     CHANGES
-2016-10-03   JJBIV      Initial version
------------------------------------------------------------------------------*/
+dependencies:   MrNodeBot API by David Richer 
+IronY)
+
+changelog & file version:
+https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/assets/js/fsoci-----------------------------------------------------------------------------*/
 
 "use strict";
 

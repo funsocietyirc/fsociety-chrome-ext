@@ -1,4 +1,14 @@
-{
+/*-----------------------------------------------------------------------------
+#fsociety Extension for Google Chrome
+
+author:         Jay Baldwin (Darc) 
+eml:            darc !AT! fsociety.guru
+irc:            irc.freenode.net #fsociety
+website:        fsociety.guru
+
+changelog & file version:
+https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/_locales/en/messages.json
+------------------------------------------------------------------------{
     "fsext_name": {
         "message": "#fsociety Extension"
     },
