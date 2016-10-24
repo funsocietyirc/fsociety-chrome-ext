@@ -7,7 +7,7 @@ irc:            irc.freenode.net #fsociety
 website:        fsociety.guru
 
 changelog & file version:
-https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/assets/js/fsociety_ext.js
+https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/assets/js/fsociety_ext_background_init.js
 -----------------------------------------------------------------------------*/
 
 
