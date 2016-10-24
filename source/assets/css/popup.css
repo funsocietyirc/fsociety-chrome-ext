@@ -8,7 +8,10 @@ website:        fsociety.guru
 
 changelog & file version:
 https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/assets/css/popup.css
-------------------------------------------------------------------------body {
+-----------------------------------------------------------------------------*/
+
+
+body {
     width: 35em;
     background-size: cover;
 }

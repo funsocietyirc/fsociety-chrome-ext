@@ -8,7 +8,10 @@ website:        fsociety.guru
 
 changelog & file version:
 https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/assets/css/options.css
-------------------------------------------------------------------------body > div {
+-----------------------------------------------------------------------------*/
+
+
+body > div {
     max-width: 31.25rem;
     margin: 0 auto;
 }

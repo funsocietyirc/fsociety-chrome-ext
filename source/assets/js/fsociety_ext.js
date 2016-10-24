@@ -1,19 +1,16 @@
 /*-----------------------------------------------------------------------------
 #fsociety Extension for Google Chrome
 
-
-
 author:         Jay Baldwin (Darc) 
-eml:            darc !AT! fsociety.girc:            irc.freenode.net #fsociety
+eml:            darc !AT! fsociety.guru
+irc:            irc.freenode.net #fsociety
 website:        fsociety.guru
 
-guru
-
-dependencies:   MrNodeBot API by David Richer 
-IronY)
+dependencies:   MrNodeBot API by David Richer (IronY)
 
 changelog & file version:
-https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/assets/js/fsoci-----------------------------------------------------------------------------*/
+https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/assets/js/fsociety_ext.js
+-----------------------------------------------------------------------------*/
 
 "use strict";
 
@@ -190,6 +187,7 @@ var fsext = {
      * @type {string}
      */
     PUSHER_APP_KEY: '9d0bcd17badf5ab7cc79', // MrNodeBot
+    //PUSHER_APP_KEY: 'ebb7ef5b6e5092256ffe', // DarkNode 
 
 
 
@@ -309,7 +307,7 @@ var fsext = {
     newGuid: function () {
         // Taken from http://stackoverflow.com/a/2117523 
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            var r = Math.random() * 16 | 0, v = (c == 'x' ? r : (r & 0x3 | 0x8));
             return v.toString(16);
         });
     },
