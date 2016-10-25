@@ -2,9 +2,10 @@
 
 ## About
 \#fsociety Chrome Extension is an effort to unify the \#fsociety IRC experience of community, 
-IronY's efforts with MrNodeBot, and the web.  The extension will eventually be made public 
-for all our users on the Chrome Web Store.  Temporary installation instructions can be 
-found below.
+IronY's efforts with MrNodeBot, and the web.  
+
+## Installation
+The production version is available in the Chrome Web Store: https://chrome.google.com/webstore/detail/fsociety-extension/mfkfglefgcaagakgklmlbajpgibdfcdd
 
 
 ## Features
