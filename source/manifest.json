@@ -1,16 +1,3 @@
-/*-----------------------------------------------------------------------------
-#fsociety Extension for Google Chrome
-
-author:         Jay Baldwin (Darc) 
-eml:            darc !AT! fsociety.guru
-irc:            irc.freenode.net #fsociety
-website:        fsociety.guru
-
-changelog & file version:
-https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/manifest.json
------------------------------------------------------------------------------*/
-
-
 {
     "manifest_version": 2,
     "background": {
@@ -45,7 +32,7 @@ https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/manifest
             "https://irony.fsociety.guru/*"
         ]
     },
-    "content_security_policy": "script-src 'self' https://js.pusher.com https://stats.pusher.com https://cdnjs.cloudflare.com; object-src 'self'",
+    "content_security_policy": "script-src 'self' https://pusher.com https://*.pusher.com https://cdnjs.cloudflare.com; object-src 'self'",
     "update_url": "http://clients2.google.com/service/update2/crx",
     "version": "0.6",
     "web_accessible_resources": [
