@@ -2,9 +2,9 @@
 #fsociety Extension for Google Chrome
 
 author:         Jay Baldwin (Darc) 
-eml:            darc !AT! fsociety.guru
+eml:            darc !AT! fsociety.online
 irc:            irc.freenode.net #fsociety
-website:        fsociety.guru
+website:        fsociety.online
 
 changelog & file version:
 https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/_locales/en/messages.json
@@ -25,7 +25,7 @@ https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/_locales
         "message": "There was an error with the API."
     },
     "fsext_info": {
-        "message": "#fsociety Extension ##VERSION## \r\nMrNodeBot & APIs created by IronY \nChrome Extension created by Darc \r\nhttps://irony.fsociety.guru\nirc.freenode.net -> #fsociety"
+        "message": "#fsociety Extension ##VERSION## \r\nMrNodeBot & APIs created by IronY \nChrome Extension created by Darc \r\nhttps://fsociety.online\nirc.freenode.net -> #fsociety"
     },
     "fsext_joinfsociety_text": {
         "message": "Join #fsociety"
@@ -46,10 +46,10 @@ https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/_locales
         "message": "#fsociety"
     },
     "fsext_website": {
-        "message": "https://irony.fsociety.guru"
+        "message": "https://fsociety.online"
     },
     "fsext_webchat": {
-        "message": "https://irony.fsociety.guru/chat"
+        "message": "https://fsociety.online/chat"
     },
     "fsext_options_usertoken_label": {
         "message": "User Token"
@@ -82,7 +82,7 @@ https://github.com/funsocietyirc/fsociety-chrome-ext/blob/master/source/_locales
         "message": "Channel"
     },
     "fsext_links_url": {
-        "message": "https://irony.fsociety.guru/links"
+        "message": "https://fsociety.online/links"
     },
     "fsext_popup_links_seemore_text": {
         "message": "See more"

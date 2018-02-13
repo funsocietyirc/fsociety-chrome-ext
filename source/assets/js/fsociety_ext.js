@@ -2,9 +2,9 @@
 #fsociety Extension for Google Chrome
 
 author:         Jay Baldwin (Darc) 
-eml:            darc !AT! fsociety.guru
+eml:            darc !AT! fsociety.online
 irc:            irc.freenode.net #fsociety
-website:        fsociety.guru
+website:        fsociety.online
 
 dependencies:   MrNodeBot API by David Richer (IronY)
 
@@ -228,10 +228,10 @@ var fsext = {
          * - type (def:null|images)
          * - sort (def:desc|asc)
          */
-        urls: "https://bot.fsociety.guru/api/urls?pageSize=50",
+        urls: "https://bot.fsociety.online/api/urls?pageSize=50",
 
         // Authorize MrNodeBot token.  Returns your nick.
-        auth_token: "https://bot.fsociety.guru/api/getNickByToken"  // Receives POST variable "token"
+        auth_token: "https://bot.fsociety.online/api/getNickByToken"  // Receives POST variable "token"
     },
 
 

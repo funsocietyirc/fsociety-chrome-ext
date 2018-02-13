@@ -22,19 +22,19 @@
         "notifications",
         "contextMenus",
         "tabs",
-        "https://fsociety.guru/*",
-        "https://irony.fsociety.guru/*"
+        "https://fsociety.online/*",
+        "https://irony.fsociety.online/*"
     ],
     "externally_connectable": {
         "matches": [
             "https://*.pusher.com/*",
-            "https://fsociety.guru/*",
-            "https://irony.fsociety.guru/*"
+            "https://fsociety.online/*",
+            "https://irony.fsociety.online/*"
         ]
     },
     "content_security_policy": "script-src 'self' https://pusher.com https://*.pusher.com https://cdnjs.cloudflare.com; object-src 'self'",
     "update_url": "http://clients2.google.com/service/update2/crx",
-    "version": "0.6",
+    "version": "0.7",
     "web_accessible_resources": [
         "assets/images/icon2_128.png"
     ]
